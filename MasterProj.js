@@ -1,171 +1,248 @@
 let screen = "menu";
-let buttons = [];
-let backButton;
+let clickUsed = false;
 let settings = {
   sound: true,
-  difficulty: "Normal"
+  volume: 100,
+  difficulty: "Normal", 
+  hapticFeedback: true
 };
 
 function setup() {
   createCanvas(800, 500);
   textAlign(CENTER, CENTER);
   rectMode(CENTER);
-
-  buttons = [
-    new Button(width / 2, 220, 220, 50, "Start", () => {
-      screen = "game";
-    }),
-    new Button(width / 2, 290, 220, 50, "Character", () => {
-      screen = "character";
-    }),
-    new Button(width / 2, 360, 220, 50, "Settings", () => {
-      screen = "settings";
-    })
-  ];
-
-  backButton = new Button(100, height - 50, 140, 44, "Back", () => {
-    screen = "menu";
-  });
 }
 
 function draw() {
   if (screen === "menu") {
     drawMenu();
-  } else if (screen === "game") {
-    drawGame();
+  } else if (screen === "selection") {
+    drawSelection();
+  } else if (screen === "game1") {
+    drawGameScreen("Catch the Stars", color(34, 92, 64));
+  } else if (screen === "game2") {
+    drawGameScreen("Maze Runner", color(32, 78, 110));
+  } else if (screen === "game3") {
+    drawGameScreen("Target Toss", color(110, 62, 42));
   } else if (screen === "character") {
     drawCharacter();
   } else if (screen === "settings") {
     drawSettings();
   }
+
+  if (!mouseIsPressed) {
+    clickUsed = false;
+  }
 }
 
 function drawMenu() {
   background(28, 36, 52);
+
+  push();
+  translate(width / 2, height / 2);
   noStroke();
   fill(45, 58, 82);
-  rect(width / 2, height / 2, width - 40, height - 40, 16);
+  rect(0, 0, width - 40, height - 40, 16);
+  pop();
 
+  push();
+  translate(width / 2, 90);
   fill(245);
   textSize(42);
-  text("Main Menu", width / 2, 90);
+  text("Main Menu", 0, 0);
+  pop();
 
+  push();
+  translate(width / 2, 140);
   textSize(16);
   fill(180, 195, 220);
-  text("Choose where to go", width / 2, 140);
+  text("Choose where to go", 0, 0);
+  pop();
 
-  for (let i = 0; i < buttons.length; i++) {
-    buttons[i].display();
+  drawUIButton(width / 2, 220, 220, 50, "Start", "selection");
+  drawUIButton(width / 2, 290, 220, 50, "Character", "character");
+  drawUIButton(width / 2, 360, 220, 50, "Settings", "settings");
+}
+
+function drawSelection() {
+  background(28, 36, 52);
+
+  push();
+  translate(width / 2, 70);
+  fill(245);
+  textSize(36);
+  text("Choose a Game", 0, 0);
+  pop();
+
+  drawGameCard(width / 2 - 230, height / 2 + 10, "Catch the Stars", "Tap falling stars", color(46, 140, 88), "game1");
+  drawGameCard(width / 2, height / 2 + 10, "Maze Runner", "Find the exit", color(48, 110, 168), "game2");
+  drawGameCard(width / 2 + 230, height / 2 + 10, "Target Toss", "Hit the targets", color(176, 92, 52), "game3");
+
+  drawUIButton(100, height - 50, 140, 44, "Back", "menu");
+}
+
+function drawGameCard(x, y, title, blurb, cardColor, action) {
+  let w = 200;
+  let h = 260;
+  let hovering =
+    mouseX > x - w / 2 &&
+    mouseX < x + w / 2 &&
+    mouseY > y - h / 2 &&
+    mouseY < y + h / 2;
+
+  push();
+  translate(x, y);
+  if (hovering) {
+    scale(1.05);
+  }
+  noStroke();
+  fill(cardColor);
+  rect(0, 0, w, h, 16);
+
+  fill(255, 255, 255, 40);
+  rect(0, -60, 120, 80, 12);
+
+  fill(255);
+  textSize(18);
+  text(title, 0, 40);
+  textSize(13);
+  fill(230);
+  text(blurb, 0, 70);
+  pop();
+
+  if (hovering && mouseIsPressed && !clickUsed) {
+    clickUsed = true;
+    screen = action;
   }
 }
 
-function drawGame() {
-  background(34, 92, 64);
+function drawGameScreen(title, bgColor) {
+  background(bgColor);
+
+  push();
+  translate(width / 2, height / 2);
   fill(245);
   textSize(36);
-  text("Game", width / 2, height / 2 - 20);
+  text(title, 0, -20);
   textSize(16);
   fill(210);
-  backButton.display();
+  text("Game will go here", 0, 20);
+  pop();
+
+  drawUIButton(100, height - 50, 140, 44, "Back", "selection");
 }
 
 function drawCharacter() {
   background(72, 48, 96);
+
+  push();
+  translate(width / 2, height / 2);
   fill(245);
   textSize(36);
-  text("Character", width / 2, height / 2 - 40);
+  text("Character", 0, -40);
   textSize(16);
   fill(210);
-  text("Character select will go here", width / 2, height / 2);
-  backButton.display();
+  text("Character select will go here", 0, 0);
+  pop();
+
+  drawUIButton(100, height - 50, 140, 44, "Back", "menu");
 }
 
 function drawSettings() {
   background(36, 44, 68);
+
+  push();
+  translate(width / 2, 50);
   fill(245);
   textSize(36);
-  text("Settings", width / 2, 90);
+  text("Settings", 0, 0);
+  pop();
 
-  textSize(18);
-  fill(220);
-  text("Sound: " + (settings.sound ? "On" : "Off"), width / 2, 180);
-  text("Difficulty: " + settings.difficulty, width / 2, 230);
-
-  textSize(14);
-  fill(180, 195, 220);
-  text("Click Sound to toggle  |  Click Difficulty to cycle", width / 2, 290);
-  backButton.display();
+  drawUIButton(width / 2, 120, 280, 44, "Sound: " + (settings.sound ? "On" : "Off"), "toggleSound");
+  drawVolumeSlider(width / 2, 195, 280);
+  drawUIButton(width / 2, 265, 280, 44, "Haptic Feedback: " + (settings.hapticFeedback ? "On" : "Off"), "toggleHaptic");
+  drawUIButton(width / 2, 325, 280, 44, "Difficulty: " + settings.difficulty, "cycleDifficulty");
+  drawUIButton(100, height - 50, 140, 44, "Back", "menu");
 }
 
-function mousePressed() {
-  if (screen === "menu") {
-    for (let i = 0; i < buttons.length; i++) {
-      buttons[i].tryClick();
-    }
-    return;
-  }
+function drawVolumeSlider(x, y, w) {
+  let trackH = 12;
+  let knobSize = 22;
+  let hovering =
+    mouseX > x - w / 2 - 12 &&
+    mouseX < x + w / 2 + 12 &&
+    mouseY > y - 36 &&
+    mouseY < y + 24;
 
-  if (screen === "settings") {
-    if (mouseOverRect(width / 2, 180, 240, 36)) {
-      settings.sound = !settings.sound;
-      return;
-    }
-    if (mouseOverRect(width / 2, 230, 240, 36)) {
-      if (settings.difficulty === "Easy") {
-        settings.difficulty = "Normal";
-      } else if (settings.difficulty === "Normal") {
-        settings.difficulty = "Hard";
-      } else {
-        settings.difficulty = "Easy";
-      }
-      return;
-    }
-  }
+  push();
+  translate(x, y);
+  fill(245);
+  textSize(16);
+  text("Volume: " + settings.volume, 0, -28);
 
-  backButton.tryClick();
-}
+  noStroke();
+  fill(50, 70, 110);
+  rect(0, 0, w, trackH, 8);
 
-function keyPressed() {
-  if (keyCode === ESCAPE && screen !== "menu") {
-    screen = "menu";
+  let fillW = map(settings.volume, 0, 100, 0, w);
+  fill(88, 140, 255);
+  rect(-w / 2 + fillW / 2, 0, fillW, trackH, 8);
+
+  let knobX = map(settings.volume, 0, 100, -w / 2, w / 2);
+  fill(255);
+  circle(knobX, 0, knobSize);
+  pop();
+
+  if (hovering && mouseIsPressed) {
+    let t = constrain(mouseX - (x - w / 2), 0, w);
+    settings.volume = round(map(t, 0, w, 0, 100));
   }
 }
 
-function mouseOverRect(x, y, w, h) {
-  return mouseX > x - w / 2 && mouseX < x + w / 2 && mouseY > y - h / 2 && mouseY < y + h / 2;
+function drawUIButton(x, y, w, h, label, action) {
+  let hovering =
+    mouseX > x - w / 2 &&
+    mouseX < x + w / 2 &&
+    mouseY > y - h / 2 &&
+    mouseY < y + h / 2;
+
+  push();
+  translate(x, y);
+  if (hovering) {
+    scale(1.06);
+  }
+  noStroke();
+  if (hovering) {
+    fill(88, 140, 255);
+  } else {
+    fill(58, 96, 196);
+  }
+  rect(0, 0, w, h, 10);
+  fill(255);
+  textSize(20);
+  text(label, 0, 0);
+  pop();
+
+  if (hovering && mouseIsPressed && !clickUsed) {
+    clickUsed = true;
+    useButton(action);
+  }
 }
 
-class Button {
-  constructor(x, y, w, h, label, onClick) {
-    this.x = x;
-    this.y = y;
-    this.w = w;
-    this.h = h;
-    this.label = label;
-    this.onClick = onClick;
-  }
-
-  hovered() {
-    return mouseOverRect(this.x, this.y, this.w, this.h);
-  }
-
-  display() {
-    if (this.hovered()) {
-      fill(88, 140, 255);
+function useButton(action) {
+  if (action === "toggleSound") {
+    settings.sound = !settings.sound;
+  } else if (action === "toggleHaptic") {
+    settings.hapticFeedback = !settings.hapticFeedback;
+  } else if (action === "cycleDifficulty") {
+    if (settings.difficulty === "Easy") {
+      settings.difficulty = "Normal";
+    } else if (settings.difficulty === "Normal") {
+      settings.difficulty = "Hard";
     } else {
-      fill(58, 96, 196);
+      settings.difficulty = "Easy";
     }
-    noStroke();
-    rect(this.x, this.y, this.w, this.h, 10);
-
-    fill(255);
-    textSize(20);
-    text(this.label, this.x, this.y);
-  }
-
-  tryClick() {
-    if (this.hovered()) {
-      this.onClick();
-    }
+  } else {
+    screen = action;
   }
 }
