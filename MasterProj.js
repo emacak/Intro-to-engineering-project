@@ -1,4 +1,4 @@
-let screen = "menu";
+let currentScreen = "menu";
 let clickUsed = false;
 let settings = {
   sound: true,
@@ -14,19 +14,19 @@ function setup() {
 }
 
 function draw() {
-  if (screen === "menu") {
+  if (currentScreen === "menu") {
     drawMenu();
-  } else if (screen === "selection") {
+  } else if (currentScreen === "selection") {
     drawSelection();
-  } else if (screen === "game1") {
+  } else if (currentScreen === "game1") {
     drawGameScreen("Catch the Stars", color(34, 92, 64));
-  } else if (screen === "game2") {
+  } else if (currentScreen === "game2") {
     drawGameScreen("Maze Runner", color(32, 78, 110));
-  } else if (screen === "game3") {
+  } else if (currentScreen === "game3") {
     drawGameScreen("Target Toss", color(110, 62, 42));
-  } else if (screen === "character") {
+  } else if (currentScreen === "character") {
     drawCharacter();
-  } else if (screen === "settings") {
+  } else if (currentScreen === "settings") {
     drawSettings();
   }
 
@@ -112,7 +112,7 @@ function drawGameCard(x, y, title, blurb, cardColor, action) {
 
   if (hovering && mouseIsPressed && !clickUsed) {
     clickUsed = true;
-    screen = action;
+    currentScreen = action;
   }
 }
 
@@ -243,6 +243,6 @@ function useButton(action) {
       settings.difficulty = "Easy";
     }
   } else {
-    screen = action;
+    currentScreen = action;
   }
 }
