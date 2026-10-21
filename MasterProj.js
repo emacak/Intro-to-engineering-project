@@ -1,5 +1,17 @@
 let currentScreen = "menu";
 let clickUsed = false;
+let typingPhrases = [
+  "Heroes never give up.",
+  "I can save the city!",
+  "Courage is my superpower.",
+  "Together, we are stronger.",
+  "Every hero starts somewhere."
+];
+let typingPhraseIndex = 0;
+let typingAnswer = "";
+let typingMessage = "";
+let typingMessageUntil = 0;
+let typingAudioContext;
 let settings = {
   sound: true,
   volume: 100,
@@ -24,6 +36,10 @@ function draw() {
     drawGameScreen("Maze Runner", color(32, 78, 110));
   } else if (currentScreen === "game3") {
     drawGameScreen("Target Toss", color(110, 62, 42));
+  } else if (currentScreen === "typing") {
+    drawTypingGame();
+  } else if (currentScreen === "typingComplete") {
+    drawTypingComplete();
   } else if (currentScreen === "character") {
     drawCharacter();
   } else if (currentScreen === "settings") {
@@ -49,14 +65,14 @@ function drawMenu() {
   translate(width / 2, 90);
   fill(245);
   textSize(42);
-  text("Main Menu", 0, 0);
+  text("Hero Academy", 0, 0);
   pop();
 
   push();
   translate(width / 2, 140);
   textSize(16);
   fill(180, 195, 220);
-  text("Choose where to go", 0, 0);
+  text("Train your super skills", 0, 0);
   pop();
 
   drawUIButton(width / 2, 220, 220, 50, "Start", "selection");
@@ -74,16 +90,17 @@ function drawSelection() {
   text("Choose a Game", 0, 0);
   pop();
 
-  drawGameCard(width / 2 - 230, height / 2 + 10, "Catch the Stars", "Tap falling stars", color(46, 140, 88), "game1");
-  drawGameCard(width / 2, height / 2 + 10, "Maze Runner", "Find the exit", color(48, 110, 168), "game2");
-  drawGameCard(width / 2 + 230, height / 2 + 10, "Target Toss", "Hit the targets", color(176, 92, 52), "game3");
+  drawGameCard(250, 190, "Catch the Stars", "Tap falling stars", color(46, 140, 88), "game1");
+  drawGameCard(550, 190, "Maze Runner", "Find the exit", color(48, 110, 168), "game2");
+  drawGameCard(250, 340, "Target Toss", "Hit the targets", color(176, 92, 52), "game3");
+  drawGameCard(550, 340, "Superhero Typing", "Type to save the city!", color(190, 54, 58), "typing");
 
   drawUIButton(100, height - 50, 140, 44, "Back", "menu");
 }
 
 function drawGameCard(x, y, title, blurb, cardColor, action) {
-  let w = 200;
-  let h = 260;
+  let w = 230;
+  let h = 125;
   let hovering =
     mouseX > x - w / 2 &&
     mouseX < x + w / 2 &&
@@ -100,20 +117,212 @@ function drawGameCard(x, y, title, blurb, cardColor, action) {
   rect(0, 0, w, h, 16);
 
   fill(255, 255, 255, 40);
-  rect(0, -60, 120, 80, 12);
+  rect(0, -34, 120, 30, 10);
 
   fill(255);
   textSize(18);
-  text(title, 0, 40);
+  text(title, 0, -5);
   textSize(13);
   fill(230);
-  text(blurb, 0, 70);
+  text(blurb, 0, 25);
   pop();
 
   if (hovering && mouseIsPressed && !clickUsed) {
     clickUsed = true;
-    currentScreen = action;
+    useButton(action);
   }
+}
+
+function drawTypingGame() {
+  background(38, 32, 52);
+
+  fill(255, 220, 92);
+  textSize(15);
+  text("SUPERHERO TRAINING", width / 2, 35);
+
+  fill(255);
+  textSize(28);
+  text("Tap the keys to save the day!", width / 2, 68);
+
+  fill(194, 205, 225);
+  textSize(16);
+  text("Mission " + (typingPhraseIndex + 1) + " of " + typingPhrases.length, width / 2, 105);
+
+  fill(25, 35, 57);
+  noStroke();
+  rect(width / 2, 150, 700, 58, 12);
+  fill(255);
+  textSize(21);
+  text(typingPhrases[typingPhraseIndex], width / 2, 150);
+
+  fill(194, 205, 225);
+  textSize(14);
+  text("Your taps:", 70, 205);
+  drawTypedAnswer();
+
+  if (typingMessage && millis() < typingMessageUntil) {
+    fill(100, 230, 145);
+    textSize(18);
+    text(typingMessage, width / 2, 245);
+  } else {
+    fill(194, 205, 225);
+    textSize(14);
+    text("Tap a letter, SPACE, punctuation, or DEL to fix a tap.", width / 2, 245);
+  }
+
+  drawTypingKeyboard();
+
+  drawUIButton(100, height - 50, 140, 44, "Back", "selection");
+}
+
+function drawTypedAnswer() {
+  const target = typingPhrases[typingPhraseIndex];
+  const startX = 70;
+  let cursorX = startX;
+
+  textAlign(LEFT, CENTER);
+  textSize(20);
+  textFont("monospace");
+  if (typingAnswer.length === 0) {
+    fill(115, 130, 155);
+    text("Tap the on-screen keys below", startX, 225);
+  } else {
+    for (let i = 0; i < typingAnswer.length; i++) {
+      const characterIsCorrect =
+        typingAnswer[i].toLowerCase() === target[i].toLowerCase();
+      fill(characterIsCorrect ? color(100, 230, 145) : color(255, 100, 105));
+      text(typingAnswer[i], cursorX, 225);
+      cursorX += textWidth(typingAnswer[i]);
+    }
+  }
+  textFont("sans-serif");
+  textAlign(CENTER, CENTER);
+}
+
+function drawTypingKeyboard() {
+  const firstRow = "QWERTYUIOP";
+  for (let i = 0; i < firstRow.length; i++) {
+    drawTypingKey(110 + i * 58, 290, 52, firstRow[i], firstRow[i].toLowerCase());
+  }
+
+  const secondRow = "ASDFGHJKL";
+  for (let i = 0; i < secondRow.length; i++) {
+    drawTypingKey(142 + i * 58, 333, 52, secondRow[i], secondRow[i].toLowerCase());
+  }
+
+  const thirdRow = "ZXCVBNM";
+  for (let i = 0; i < thirdRow.length; i++) {
+    drawTypingKey(56 + i * 50, 376, 45, thirdRow[i], thirdRow[i].toLowerCase());
+  }
+  drawTypingKey(482, 376, 145, "SPACE", " ");
+  drawTypingKey(569, 376, 78, "DEL", "delete");
+  drawTypingKey(668, 376, 40, ",", ",");
+  drawTypingKey(716, 376, 40, ".", ".");
+  drawTypingKey(764, 376, 40, "!", "!");
+}
+
+function drawTypingKey(x, y, keyWidth, label, value) {
+  const keyHeight = 34;
+  const hovering =
+    mouseX >= x - keyWidth / 2 &&
+    mouseX <= x + keyWidth / 2 &&
+    mouseY >= y - keyHeight / 2 &&
+    mouseY <= y + keyHeight / 2;
+
+  noStroke();
+  fill(hovering ? color(88, 140, 255) : color(58, 76, 112));
+  rect(x, y, keyWidth, keyHeight, 6);
+  fill(255);
+  textSize(label.length > 1 ? 13 : 18);
+  text(label, x, y);
+
+  if (hovering && mouseIsPressed && !clickUsed) {
+    clickUsed = true;
+    pressTypingKey(value);
+  }
+}
+
+function pressTypingKey(value) {
+  if (value === "delete") {
+    typingAnswer = typingAnswer.slice(0, -1);
+    return;
+  }
+
+  const target = typingPhrases[typingPhraseIndex];
+  if (typingAnswer.length >= target.length) {
+    return;
+  }
+
+  typingAnswer += value;
+  const index = typingAnswer.length - 1;
+  if (typingAnswer[index].toLowerCase() !== target[index].toLowerCase()) {
+    playTypingFeedback(false);
+    return;
+  }
+
+  if (typingAnswer.toLowerCase() === target.toLowerCase()) {
+    playTypingFeedback(true);
+    typingPhraseIndex++;
+    if (typingPhraseIndex === typingPhrases.length) {
+      currentScreen = "typingComplete";
+    } else {
+      typingAnswer = "";
+      typingMessage = "Correct!";
+      typingMessageUntil = millis() + 800;
+    }
+  }
+}
+
+function playTypingFeedback(correct) {
+  if (!settings.sound) {
+    return;
+  }
+
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) {
+    return;
+  }
+
+  if (!typingAudioContext) {
+    typingAudioContext = new AudioContextClass();
+  }
+  if (typingAudioContext.state === "suspended") {
+    typingAudioContext.resume();
+  }
+
+  const frequencies = correct ? [880, 1320] : [220];
+  frequencies.forEach((frequency, index) => {
+    const startTime = typingAudioContext.currentTime + index * 0.12;
+    const oscillator = typingAudioContext.createOscillator();
+    const gain = typingAudioContext.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, startTime);
+    if (!correct) {
+      oscillator.frequency.exponentialRampToValueAtTime(140, startTime + 0.16);
+    }
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.exponentialRampToValueAtTime(
+      Math.max(0.0001, 0.12 * settings.volume / 100),
+      startTime + 0.015
+    );
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.22);
+    oscillator.connect(gain);
+    gain.connect(typingAudioContext.destination);
+    oscillator.start(startTime);
+    oscillator.stop(startTime + 0.23);
+  });
+}
+
+function drawTypingComplete() {
+  background(38, 32, 52);
+  fill(255, 220, 92);
+  textSize(36);
+  text("MISSION COMPLETE!", width / 2, 170);
+  fill(255);
+  textSize(20);
+  text("You saved the city, one word at a time.", width / 2, 230);
+  drawUIButton(width / 2, 320, 220, 48, "Train Again", "restartTyping");
+  drawUIButton(100, height - 50, 140, 44, "Back", "selection");
 }
 
 function drawGameScreen(title, bgColor) {
@@ -242,7 +451,17 @@ function useButton(action) {
     } else {
       settings.difficulty = "Easy";
     }
+  } else if (action === "restartTyping") {
+    typingPhraseIndex = 0;
+    typingAnswer = "";
+    typingMessage = "";
+    currentScreen = "typing";
   } else {
+    if (action === "typing") {
+      typingPhraseIndex = 0;
+      typingAnswer = "";
+      typingMessage = "";
+    }
     currentScreen = action;
   }
 }
