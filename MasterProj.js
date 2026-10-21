@@ -1,5 +1,8 @@
 let currentScreen = "menu";
 let clickUsed = false;
+let mainCanvas;
+let exerciseFrame;
+let exerciseBackButton;
 let typingPhrases = [
   "Heroes never give up.",
   "I can save the city!",
@@ -29,9 +32,34 @@ const nameInput = {
 };
 
 function setup() {
-  let cnv = createCanvas(800, 500);
-  cnv.elt.setAttribute("tabindex", "0");
-  cnv.elt.focus();
+  mainCanvas = createCanvas(800, 500);
+  mainCanvas.elt.setAttribute("tabindex", "0");
+  mainCanvas.elt.focus();
+  exerciseFrame = createElement("iframe");
+  exerciseFrame.attribute("title", "Superhero exercise");
+  exerciseFrame.attribute("allow", "autoplay");
+  exerciseFrame.style("position", "fixed");
+  exerciseFrame.style("inset", "0");
+  exerciseFrame.style("width", "100vw");
+  exerciseFrame.style("height", "100vh");
+  exerciseFrame.style("border", "0");
+  exerciseFrame.style("z-index", "10");
+  exerciseFrame.hide();
+
+  exerciseBackButton = createButton("Back to games");
+  exerciseBackButton.style("position", "fixed");
+  exerciseBackButton.style("left", "16px");
+  exerciseBackButton.style("top", "16px");
+  exerciseBackButton.style("z-index", "11");
+  exerciseBackButton.style("padding", "10px 16px");
+  exerciseBackButton.style("border", "0");
+  exerciseBackButton.style("border-radius", "8px");
+  exerciseBackButton.style("background", "#3a60c4");
+  exerciseBackButton.style("color", "white");
+  exerciseBackButton.style("font-size", "16px");
+  exerciseBackButton.style("cursor", "pointer");
+  exerciseBackButton.mousePressed(exitExercise);
+  exerciseBackButton.hide();
 
   textAlign(CENTER, CENTER);
   rectMode(CENTER);
@@ -72,12 +100,6 @@ function draw() {
     drawMenu();
   } else if (currentScreen === "selection") {
     drawSelection();
-  } else if (currentScreen === "game1") {
-    drawGameScreen("Catch the Stars", color(34, 92, 64));
-  } else if (currentScreen === "game2") {
-    drawGameScreen("Maze Runner", color(32, 78, 110));
-  } else if (currentScreen === "game3") {
-    drawGameScreen("Target Toss", color(110, 62, 42));
   } else if (currentScreen === "typing") {
     drawTypingGame();
   } else if (currentScreen === "typingComplete") {
@@ -133,12 +155,27 @@ function drawSelection() {
   text("Choose a Game", 0, 0);
   pop();
 
-  drawGameCard(250, 190, "Catch the Stars", "Tap falling stars", color(46, 140, 88), "game1");
-  drawGameCard(550, 190, "Maze Runner", "Find the exit", color(48, 110, 168), "game2");
-  drawGameCard(250, 340, "Target Toss", "Hit the targets", color(176, 92, 52), "game3");
-  drawGameCard(550, 340, "Superhero Typing", "Type to save the city!", color(190, 54, 58), "typing");
+  drawGameCard(155, 250, "Color in the Lines", "Color the superhero carefully", color(46, 140, 88), "colorGame");
+  drawGameCard(400, 250, "Crush the Villain", "Pinch the villain to save the hero", color(176, 92, 52), "villainGame");
+  drawGameCard(645, 250, "Superhero Typing", "Tap keys to save the city", color(190, 54, 58), "typing");
 
   drawUIButton(100, height - 50, 140, 44, "Back", "menu");
+}
+
+function enterExercise(fileName) {
+  currentScreen = fileName === "ColorGame.js" ? "colorExercise" : "villainExercise";
+  exerciseFrame.attribute("src", "./exercise.html?sketch=" + encodeURIComponent(fileName));
+  mainCanvas.hide();
+  exerciseFrame.show();
+  exerciseBackButton.show();
+}
+
+function exitExercise() {
+  exerciseFrame.hide();
+  exerciseFrame.attribute("src", "about:blank");
+  exerciseBackButton.hide();
+  mainCanvas.show();
+  currentScreen = "selection";
 }
 
 function drawGameCard(x, y, title, blurb, cardColor, action) {
@@ -368,22 +405,6 @@ function drawTypingComplete() {
   drawUIButton(100, height - 50, 140, 44, "Back", "selection");
 }
 
-function drawGameScreen(title, bgColor) {
-  background(bgColor);
-
-  push();
-  translate(width / 2, height / 2);
-  fill(245);
-  textSize(36);
-  text(title, 0, -20);
-  textSize(16);
-  fill(210);
-  text("Game will go here", 0, 20);
-  pop();
-
-  drawUIButton(100, height - 50, 140, 44, "Back", "selection");
-}
-
 function drawCharacter() {
   background(72, 48, 96);
 
@@ -534,7 +555,11 @@ function drawUIButton(x, y, w, h, label, action) {
 
 function useButton(action) {
   nameInputFocused = false;
-  if (action === "toggleSound") {
+  if (action === "colorGame") {
+    enterExercise("ColorGame.js");
+  } else if (action === "villainGame") {
+    enterExercise("cursh-the-villian.js");
+  } else if (action === "toggleSound") {
     settings.sound = !settings.sound;
   } else if (action === "toggleHaptic") {
     settings.hapticFeedback = !settings.hapticFeedback;
