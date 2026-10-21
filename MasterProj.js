@@ -1,16 +1,58 @@
 let currentScreen = "menu";
 let clickUsed = false;
 let settings = {
+  name: "",
   sound: true,
   volume: 100,
   difficulty: "Normal", 
   hapticFeedback: true
 };
 
+let nameInputFocused = false;
+const nameInput = {
+  x: 430,
+  y: 115,
+  w: 200,
+  h: 38
+};
+
 function setup() {
-  createCanvas(800, 500);
+  let cnv = createCanvas(800, 500);
+  cnv.elt.setAttribute("tabindex", "0");
+  cnv.elt.focus();
+
   textAlign(CENTER, CENTER);
   rectMode(CENTER);
+
+  // Native keyboard listener so typing and holding Backspace work reliably
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && currentScreen !== "menu") {
+      currentScreen = "menu";
+      nameInputFocused = false;
+      return;
+    }
+
+    if (currentScreen !== "settings" || !nameInputFocused) {
+      return;
+    }
+
+    if (e.key === "Backspace" || e.key === "Delete" || e.keyCode === 8) {
+      e.preventDefault();
+      settings.name = settings.name.slice(0, -1);
+      return;
+    }
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+      nameInputFocused = false;
+      return;
+    }
+
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && settings.name.length < 24) {
+      e.preventDefault();
+      settings.name += e.key;
+    }
+  });
 }
 
 function draw() {
@@ -48,8 +90,9 @@ function drawMenu() {
   push();
   translate(width / 2, 90);
   fill(245);
-  textSize(42);
-  text("Main Menu", 0, 0);
+  textSize(36);
+  let displayName = settings.name.trim() !== "" ? settings.name : "Player";
+  text("Welcome back, " + displayName + "!", 0, 0);
   pop();
 
   push();
@@ -158,11 +201,62 @@ function drawSettings() {
   text("Settings", 0, 0);
   pop();
 
-  drawUIButton(width / 2, 120, 280, 44, "Sound: " + (settings.sound ? "On" : "Off"), "toggleSound");
-  drawVolumeSlider(width / 2, 195, 280);
-  drawUIButton(width / 2, 265, 280, 44, "Haptic Feedback: " + (settings.hapticFeedback ? "On" : "Off"), "toggleHaptic");
-  drawUIButton(width / 2, 325, 280, 44, "Difficulty: " + settings.difficulty, "cycleDifficulty");
+  drawNameInput();
+  drawUIButton(width / 2, 175, 280, 44, "Sound: " + (settings.sound ? "On" : "Off"), "toggleSound");
+  drawVolumeSlider(width / 2, 250, 280);
+  drawUIButton(width / 2, 320, 280, 44, "Haptic Feedback: " + (settings.hapticFeedback ? "On" : "Off"), "toggleHaptic");
+  drawUIButton(width / 2, 380, 280, 44, "Difficulty: " + settings.difficulty, "cycleDifficulty");
   drawUIButton(100, height - 50, 140, 44, "Back", "menu");
+}
+
+function drawNameInput() {
+  nameInput.x = width / 2 + 30;
+  let hovering =
+    mouseX > nameInput.x - nameInput.w / 2 &&
+    mouseX < nameInput.x + nameInput.w / 2 &&
+    mouseY > nameInput.y - nameInput.h / 2 &&
+    mouseY < nameInput.y + nameInput.h / 2;
+
+  if (mouseIsPressed && !clickUsed) {
+    if (hovering) {
+      nameInputFocused = true;
+      clickUsed = true;
+    } else {
+      nameInputFocused = false;
+    }
+  }
+
+  push();
+  fill(220);
+  textSize(18);
+  textAlign(RIGHT, CENTER);
+  text("Name:", nameInput.x - nameInput.w / 2 - 12, nameInput.y);
+
+  rectMode(CENTER);
+  stroke(nameInputFocused ? 120 : 90, nameInputFocused ? 170 : 110, 220);
+  strokeWeight(2);
+  fill(248);
+  rect(nameInput.x, nameInput.y, nameInput.w, nameInput.h, 6);
+
+  noStroke();
+  textAlign(LEFT, CENTER);
+  textSize(16);
+
+  if (settings.name.length === 0 && !nameInputFocused) {
+    fill(150, 155, 170);
+    text("Enter name...", nameInput.x - nameInput.w / 2 + 10, nameInput.y);
+  } else {
+    fill(35, 42, 60);
+    const visibleName = settings.name.length > 18
+      ? settings.name.slice(-18)
+      : settings.name;
+    text(
+      visibleName + (nameInputFocused && frameCount % 60 < 30 ? "|" : ""),
+      nameInput.x - nameInput.w / 2 + 10,
+      nameInput.y
+    );
+  }
+  pop();
 }
 
 function drawVolumeSlider(x, y, w) {
@@ -230,6 +324,7 @@ function drawUIButton(x, y, w, h, label, action) {
 }
 
 function useButton(action) {
+  nameInputFocused = false;
   if (action === "toggleSound") {
     settings.sound = !settings.sound;
   } else if (action === "toggleHaptic") {
