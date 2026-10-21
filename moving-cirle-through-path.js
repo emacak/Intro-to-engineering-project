@@ -3,62 +3,84 @@ let h = 400;
 let gameOver = false;
 let gameWinning = false;
 
+let r = 25;
+let x1 = r;
+let y1 = h / 2;
+
+let x2 = w - r;
+let y2 = h / 2;
+
+let drag1 = false;
+let drag2 = false;
+
+let characterX = w / 2;
+let characterY = h / 2;
+let characterR = 30;
+
 function setup() {
   createCanvas(w, h);
 }
-// elements of cirle:
-let r = 25, x = r, y = h / 2;
-let drag = false;
 
-function mouseReleased(){
-  drag = false;
+function mousePressed() {
+  if (gameOver || gameWinning) return;
+
+  let d1 = dist(mouseX, mouseY, x1, y1);
+  let d2 = dist(mouseX, mouseY, x2, y2);
+
+  if (d1 <= r) {
+    drag1 = true;
+  } else if (d2 <= r) {
+    drag2 = true;
+  }
 }
 
-function mousePressed(){
-  let d = dist(mouseX, mouseY, x, y);
-  if( d <= r){
-    drag = true;
-  }
+function mouseReleased() {
+  drag1 = false;
+  drag2 = false;
 }
 
 function draw() {
   background(220);
-  
-  let lineY = h / 2;
-  let gap = 100;
 
-  line(0, lineY - gap / 2, w, lineY - gap / 2);
-  line(0, lineY + gap / 2, w, lineY + gap / 2);
-  
-  let topLine = lineY - gap / 2;
-  let bottomLine = lineY + gap / 2;
-
-  let finishX = w - 50;
-  line(finishX, topLine, finishX, bottomLine);
-  
-  if (y - r <= topLine || y + r >= bottomLine) {
-    gameOver = true;
+  if (drag1) {
+    x1 = mouseX;
+    y1 = mouseY;
   }
 
-  if (x + r >= finishX) {
-    drag = false;
+  if (drag2) {
+    x2 = mouseX;
+    y2 = mouseY;
+  }
+
+  fill(255, 100, 100);
+  circle(characterX, characterY, characterR * 2);
+
+  fill(0);
+  circle(characterX - 10, characterY - 5, 5);
+  circle(characterX + 10, characterY - 5, 5);
+
+  fill(100, 150, 255);
+  circle(x1, y1, r * 2);
+
+  fill(100, 255, 150);
+  circle(x2, y2, r * 2);
+
+  let d1 = dist(x1, y1, characterX, characterY);
+  let d2 = dist(x2, y2, characterX, characterY);
+
+  if (d1 <= r + characterR &&
+      d2 <= r + characterR) {
     gameWinning = true;
+    drag1 = false;
+    drag2 = false;
   }
-  
-  if(drag){
-    x = mouseX;
-    y = mouseY;
-  }
-  circle(x, y, r * 2);
-  if(gameOver){
-    textSize(32);
-    text("GAME OVER", w / 2 - 50, 50);
-    noLoop();
-  }
+
+  // Display win message
   if (gameWinning) {
+    fill(0, 150, 0);
     textAlign(CENTER);
-    textSize(32);
-    text("YOU ARE THE WINNER", w / 2, 80);
+    textSize(30);
+    text("YOU WIN!", w / 2, 60);
     noLoop();
   }
 }
