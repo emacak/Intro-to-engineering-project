@@ -18,6 +18,10 @@ The sound toggle and volume setting control the typing feedback sounds.
 The color and villain exercises run in isolated frames so their standalone sketches
 can be used without interfering with the main menu. Use **Back to games** to return.
 
+Choose **Character** from the main menu to customize a female or male superhero.
+Use the arrows to change shirt, pants, shoe colors, and hair or hat styles. The
+preview updates immediately, and choices are kept until the page is reloaded.
+
 In **Color in the Lines**, drag the **Thickness** slider beneath the accuracy display
 to change the brush and eraser width from 4 to 50 pixels. The cursor circle previews
 the selected thickness, which stays the same when switching tools or clearing the canvas.
