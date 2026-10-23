@@ -23,8 +23,9 @@ Each exercise has Easy, Normal, and Hard variations. Passing accuracy is 70% on 
 85% on Normal, and 95% on Hard. Accuracy measures coloring strokes inside the lines,
 correct typing taps for each phrase, or average pinch-position accuracy across the
 villain targets. The difficulty selector applies to all exercises. Easy coloring uses a
-bat-themed hero and larger brush; Normal keeps the lightning-emblem hero; Hard uses a
-spider-themed hero and a smaller brush. The villain challenge
+simple lightning-emblem hero and larger brush; Normal (medium) features Batman with
+his cowl, cape, and utility belt; Hard features Spider-Man with detailed web patterns
+and a smaller brush. The villain challenge
 increases from one large target, to two targets, to three smaller targets. Typing
 progresses from short words and phrases, to sentences, to longer rescue briefings.
 The coloring hero and the villain/rescue hero also have different custom-drawn looks

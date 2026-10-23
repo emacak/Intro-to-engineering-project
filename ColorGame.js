@@ -57,10 +57,10 @@ function setup() {
   brushSize = difficultySettings.brushSize;
   passAccuracy = difficultySettings.passAccuracy;
   feedbackMessage = exerciseDifficulty === "Easy"
-    ? "Easy: Color the night guardian's suit and cape."
+    ? "Easy: Color the superhero and lightning emblem."
     : exerciseDifficulty === "Normal"
-      ? "Normal: Color the hero and the lightning emblem."
-      : "Hard: Color the web-powered hero's detailed suit.";
+      ? "Medium: Color Batman's cowl, cape, and utility belt."
+      : "Hard: Color Spider-Man's mask and web-pattern suit.";
 
   let cnv = createCanvas(800, 500);
   if (cnv && cnv.elt) {
@@ -543,98 +543,26 @@ function buildSuperheroArtwork() {
 
   // Draw the crisp black outlines on top
   drawHeroShapes(outlineLayer, cx, cy, "outline");
-  drawDifficultyDetails(maskLayer, cx, cy, "mask");
   drawDifficultyDetails(outlineLayer, cx, cy, "outline");
 }
 
 function drawDifficultyDetails(pg, cx, cy, mode) {
+  if (exerciseDifficulty !== "Easy") return;
   pg.push();
   pg.noFill();
-  pg.stroke(mode === "mask" ? color(0, 255, 0) : color(15));
-  pg.strokeWeight(mode === "mask" ? 4 : 3);
-  pg.strokeJoin(ROUND);
-  pg.strokeCap(ROUND);
-
-  if (exerciseDifficulty === "Easy") {
-    pg.beginShape();
-    pg.vertex(cx - 30, cy + 1);
-    pg.vertex(cx - 12, cy - 7);
-    pg.vertex(cx, cy - 2);
-    pg.vertex(cx + 12, cy - 7);
-    pg.vertex(cx + 30, cy + 1);
-    pg.vertex(cx + 12, cy + 5);
-    pg.vertex(cx, cy + 13);
-    pg.vertex(cx - 12, cy + 5);
-    pg.endShape(CLOSE);
-    pg.line(cx - 13, cy - 102, cx - 24, cy - 112);
-    pg.line(cx + 13, cy - 102, cx + 24, cy - 112);
-  } else if (exerciseDifficulty === "Hard") {
-    for (let ray = -2; ray <= 2; ray++) {
-      pg.line(cx, cy - 120, cx + ray * 17, cy - 78);
-      pg.line(cx, cy - 78, cx + ray * 14, cy - 39);
-    }
-    pg.arc(cx, cy - 102, 64, 34, PI, TWO_PI);
-    pg.arc(cx, cy - 83, 42, 24, 0, PI);
-    pg.line(cx, cy - 49, cx, cy - 23);
-    pg.line(cx, cy - 23, cx - 18, cy - 2);
-    pg.line(cx, cy - 23, cx + 18, cy - 2);
-    pg.line(cx - 29, cy - 28, cx + 29, cy - 28);
-    pg.line(cx - 24, cy - 12, cx + 24, cy - 12);
-    pg.line(cx - 18, cy + 4, cx + 18, cy + 4);
-  } else {
-    pg.beginShape();
-    pg.vertex(cx - 15, cy - 12);
-    pg.vertex(cx + 2, cy - 12);
-    pg.vertex(cx - 4, cy + 1);
-    pg.vertex(cx + 14, cy + 1);
-    pg.vertex(cx - 8, cy + 22);
-    pg.vertex(cx - 2, cy + 7);
-    pg.vertex(cx - 18, cy + 7);
-    pg.endShape(CLOSE);
-  }
-
-  if (exerciseDifficulty === "Normal") {
-    pg.beginShape();
-    pg.vertex(cx - 43, cy - 99);
-    pg.vertex(cx, cy - 110);
-    pg.vertex(cx + 43, cy - 99);
-    pg.vertex(cx + 32, cy - 84);
-    pg.vertex(cx, cy - 91);
-    pg.vertex(cx - 32, cy - 84);
-    pg.endShape(CLOSE);
-  }
-
-  if (exerciseDifficulty === "Hard") {
-    pg.beginShape();
-    pg.vertex(cx - 54, cy - 48);
-    pg.vertex(cx - 34, cy - 63);
-    pg.vertex(cx - 24, cy - 38);
-    pg.vertex(cx - 50, cy - 20);
-    pg.endShape(CLOSE);
-    pg.beginShape();
-    pg.vertex(cx + 54, cy - 48);
-    pg.vertex(cx + 34, cy - 63);
-    pg.vertex(cx + 24, cy - 38);
-    pg.vertex(cx + 50, cy - 20);
-    pg.endShape(CLOSE);
-    pg.line(cx - 31, cy - 29, cx - 22, cy + 32);
-    pg.line(cx + 31, cy - 29, cx + 22, cy + 32);
-    pg.line(cx - 35, cy + 55, cx + 35, cy + 55);
-    pg.line(cx - 36, cy + 73, cx - 12, cy + 73);
-    pg.line(cx + 12, cy + 73, cx + 36, cy + 73);
-    pg.line(cx - 51, cy + 133, cx - 10, cy + 133);
-    pg.line(cx + 10, cy + 133, cx + 51, cy + 133);
-  }
+  pg.stroke(15);
+  pg.strokeWeight(2.5);
+  heroPolygon(pg, cx, cy, [[-15,-12],[2,-12],[-4,1],[14,1],[-8,22],[-2,7],[-18,7]]);
   pg.pop();
 }
 
 function drawHeroShapes(pg, cx, cy, mode) {
-  if (exerciseDifficulty === "Easy") {
-    drawNightGuardianShapes(pg, cx, cy, mode);
+  if (exerciseDifficulty === "Normal") {
+    drawBatmanShapes(pg, cx, cy, mode);
     return;
   }
   if (exerciseDifficulty === "Hard") {
-    drawWebHeroShapes(pg, cx, cy, mode);
+    drawSpiderManShapes(pg, cx, cy, mode);
     return;
   }
 
@@ -775,194 +703,185 @@ function drawHeroShapes(pg, cx, cy, mode) {
   pg.pop();
 }
 
-function drawNightGuardianShapes(pg, cx, cy, mode) {
-  pg.push();
-  if (mode === "mask") {
-    pg.fill(0, 255, 0);
-    pg.stroke(0, 255, 0);
-    pg.strokeWeight(2);
-  } else if (mode === "erase") {
+// Use the same closed silhouettes for artwork, background knockout, and scoring.
+function heroPolygon(pg, cx, cy, points, knockout = false) {
+  if (knockout) {
+    // Remove hidden cape lines without covering the user's paint underneath.
+    pg.push();
+    pg.erase();
     pg.fill(255);
-    pg.stroke(255);
-    pg.strokeWeight(2);
-  } else {
+    heroPolygon(pg, cx, cy, points);
+    pg.noErase();
+    pg.pop();
+  }
+  pg.beginShape();
+  for (const [x, y] of points) pg.vertex(cx + x, cy + y);
+  pg.endShape(CLOSE);
+}
+
+function setHeroDrawingStyle(pg, mode) {
+  pg.strokeJoin(ROUND);
+  pg.strokeCap(ROUND);
+  pg.strokeWeight(mode === "outline" ? 3 : 2);
+  if (mode === "outline") {
     pg.noFill();
     pg.stroke(15);
-    pg.strokeWeight(3.5);
-    pg.strokeJoin(ROUND);
-    pg.strokeCap(ROUND);
+  } else {
+    pg.fill(mode === "mask" ? "#00FF00" : "#FFFFFF");
+    pg.stroke(mode === "mask" ? "#00FF00" : "#FFFFFF");
   }
+}
 
-  // Broad scalloped cape and compact cowl create an original night-guardian design.
+function drawBatmanShapes(pg, cx, cy, mode) {
+  pg.push();
+  setHeroDrawingStyle(pg, mode);
+  const shape = points => heroPolygon(pg, cx, cy, points, mode === "outline");
+  // Scalloped cape, with generous regions for medium difficulty.
   pg.beginShape();
-  pg.vertex(cx - 31, cy - 40);
-  pg.vertex(cx - 78, cy - 8);
-  pg.vertex(cx - 112, cy + 126);
-  pg.vertex(cx - 68, cy + 116);
-  pg.vertex(cx - 39, cy + 137);
-  pg.vertex(cx - 10, cy + 119);
-  pg.vertex(cx + 20, cy + 137);
-  pg.vertex(cx + 48, cy + 116);
-  pg.vertex(cx + 72, cy + 126);
-  pg.vertex(cx + 79, cy - 8);
-  pg.vertex(cx + 31, cy - 40);
-  pg.endShape(CLOSE);
-
-  pg.beginShape();
-  pg.vertex(cx - 35, cy - 34);
-  pg.vertex(cx - 72, cy + 2);
-  pg.vertex(cx - 45, cy + 35);
-  pg.vertex(cx - 30, cy + 20);
-  pg.vertex(cx - 51, cy + 2);
-  pg.vertex(cx - 20, cy - 17);
-  pg.endShape(CLOSE);
-  pg.beginShape();
-  pg.vertex(cx + 30, cy - 34);
-  pg.vertex(cx + 68, cy - 75);
-  pg.vertex(cx + 88, cy - 61);
-  pg.vertex(cx + 44, cy - 10);
-  pg.endShape(CLOSE);
-  pg.circle(cx + 88, cy - 78, 31);
-
-  pg.rectMode(CENTER);
-  pg.rect(cx - 23, cy + 88, 28, 56, 4);
-  pg.rect(cx + 23, cy + 88, 28, 56, 4);
-  pg.beginShape();
-  pg.vertex(cx - 39, cy + 107);
-  pg.vertex(cx - 7, cy + 107);
-  pg.vertex(cx - 7, cy + 160);
-  pg.vertex(cx - 50, cy + 160);
-  pg.vertex(cx - 50, cy + 144);
-  pg.vertex(cx - 39, cy + 141);
-  pg.endShape(CLOSE);
-  pg.beginShape();
-  pg.vertex(cx + 7, cy + 107);
-  pg.vertex(cx + 39, cy + 107);
-  pg.vertex(cx + 39, cy + 141);
-  pg.vertex(cx + 50, cy + 144);
-  pg.vertex(cx + 50, cy + 160);
-  pg.vertex(cx + 7, cy + 160);
+  pg.vertex(cx - 36, cy - 40);
+  pg.bezierVertex(cx - 87, cy - 22, cx - 100, cy + 70, cx - 123, cy + 133);
+  pg.bezierVertex(cx - 95, cy + 113, cx - 77, cy + 117, cx - 64, cy + 142);
+  pg.bezierVertex(cx - 43, cy + 119, cx - 20, cy + 121, cx, cy + 145);
+  pg.bezierVertex(cx + 20, cy + 121, cx + 43, cy + 119, cx + 64, cy + 142);
+  pg.bezierVertex(cx + 77, cy + 117, cx + 95, cy + 113, cx + 123, cy + 133);
+  pg.bezierVertex(cx + 100, cy + 70, cx + 87, cy - 22, cx + 36, cy - 40);
   pg.endShape(CLOSE);
 
-  pg.beginShape();
-  pg.vertex(cx - 36, cy - 38);
-  pg.vertex(cx + 36, cy - 38);
-  pg.vertex(cx + 33, cy + 57);
-  pg.vertex(cx - 33, cy + 57);
-  pg.endShape(CLOSE);
-  pg.rect(cx, cy + 45, 70, 15, 3);
-  pg.rect(cx, cy + 45, 20, 19, 3);
-
-  pg.beginShape();
-  pg.vertex(cx - 52, cy - 91);
-  pg.vertex(cx - 58, cy - 148);
-  pg.vertex(cx - 25, cy - 127);
-  pg.vertex(cx, cy - 136);
-  pg.vertex(cx + 25, cy - 127);
-  pg.vertex(cx + 58, cy - 148);
-  pg.vertex(cx + 52, cy - 91);
-  pg.vertex(cx + 34, cy - 63);
-  pg.vertex(cx, cy - 52);
-  pg.vertex(cx - 34, cy - 63);
-  pg.endShape(CLOSE);
+  // Share the arm boundary with the gauntlet lines so their ends meet exactly.
+  const arm = [[38,-36],[64,-20],[78,40],[63,57],[48,43],[39,4]];
+  for (const side of [-1, 1]) {
+    shape(arm.map(([x,y]) => [side*x,y]));
+    shape([[side*4,58],[side*34,58],[side*36,112],
+      [side*44,146],[side*54,153],[side*54,165],[side*7,165],[side*7,112]]);
+  }
+  shape([[-38,-40],[38,-40],[33,58],[-33,58]]);
+  shape([[-19,-57],[19,-57],[20,-40],[-20,-40]]);
+  // Tall pointed ears and a squared jaw make the cowl unmistakable.
+  shape([[-44,-111],[-43,-171],[-23,-145],[23,-145],
+    [43,-171],[44,-111],[37,-77],[22,-57],[-22,-57],[-37,-77]]);
 
   if (mode === "outline") {
-    pg.beginShape();
-    pg.vertex(cx - 37, cy - 91);
-    pg.vertex(cx - 20, cy - 100);
-    pg.vertex(cx - 5, cy - 88);
-    pg.vertex(cx - 20, cy - 80);
-    pg.endShape(CLOSE);
-    pg.beginShape();
-    pg.vertex(cx + 37, cy - 91);
-    pg.vertex(cx + 20, cy - 100);
-    pg.vertex(cx + 5, cy - 88);
-    pg.vertex(cx + 20, cy - 80);
-    pg.endShape(CLOSE);
+    pg.strokeWeight(2.2);
+    heroPolygon(pg, cx, cy, [[-33,-114],[-8,-107],[-15,-100],[-30,-102]]);
+    heroPolygon(pg, cx, cy, [[33,-114],[8,-107],[15,-100],[30,-102]]);
+    heroPolygon(pg, cx, cy, [[-28,-86],[-10,-91],[0,-84],[10,-91],[28,-86],
+      [22,-65],[-22,-65]]);
+    pg.line(cx-10, cy-74, cx+10, cy-74);
+    pg.ellipse(cx, cy-7, 63, 34);
+    heroPolygon(pg, cx, cy, [[-27,-14],[-17,-10],[-10,-12],[-6,-19],[-3,-14],
+      [3,-14],[6,-19],[10,-12],[17,-10],[27,-14],[22,-2],[15,-4],
+      [9,1],[4,0],[0,7],[-4,0],[-9,1],[-15,-4],[-22,-2]]);
+    pg.rectMode(CENTER);
+    pg.rect(cx, cy+44, 66, 15, 2);
+    pg.rect(cx, cy+44, 16, 17, 2);
+    for (const side of [-1,1]) {
+      pg.rect(cx+side*22, cy+44, 10, 10, 1);
+      pg.line(cx+side*7, cy+111, cx+side*36, cy+111);
+      const armBoundary = arm.map(([x,y]) => [side*x,y]);
+      drawWebCrossLine(pg, cx, cy, armBoundary, [side*47,16], [side*25,-5]);
+      drawWebCrossLine(pg, cx, cy, armBoundary, [side*50,27], [side*25,-5]);
+    }
   }
   pg.pop();
 }
 
-function drawWebHeroShapes(pg, cx, cy, mode) {
+function drawSpiderManShapes(pg, cx, cy, mode) {
   pg.push();
-  if (mode === "mask") {
-    pg.fill(0, 255, 0);
-    pg.stroke(0, 255, 0);
-    pg.strokeWeight(2);
-  } else if (mode === "erase") {
-    pg.fill(255);
-    pg.stroke(255);
-    pg.strokeWeight(2);
-  } else {
-    pg.noFill();
-    pg.stroke(15);
-    pg.strokeWeight(3.5);
-    pg.strokeJoin(ROUND);
-    pg.strokeCap(ROUND);
+  setHeroDrawingStyle(pg, mode);
+  // Full mask, connected neck, and a raised web-shooting arm; no cape or belt.
+  const leftArm = [[-34,-38],[-58,-20],[-96,37],[-91,55],[-77,59],[-63,42],[-40,8]];
+  const rightArm = [[34,-38],[61,-68],[86,-105],[103,-94],[80,-49],[41,7]];
+  heroPolygon(pg, cx, cy, leftArm);
+  heroPolygon(pg, cx, cy, rightArm);
+  heroPolygon(pg, cx, cy, [[86,-105],[84,-121],[89,-141],[96,-139],
+    [94,-122],[99,-122],[105,-137],[111,-133],[106,-113],[110,-101],[103,-94]]);
+  for (const side of [-1,1]) {
+    heroPolygon(pg, cx, cy, [[side*3,57],[side*30,57],[side*34,111],
+      [side*39,145],[side*51,153],[side*51,164],[side*7,164],[side*6,111]]);
   }
+  heroPolygon(pg, cx, cy, [[-34,-38],[34,-38],[30,57],[0,68],[-30,57]]);
+  heroPolygon(pg, cx, cy, [[-17,-58],[17,-58],[18,-38],[-18,-38]]);
+  pg.ellipse(cx, cy-107, 83, 100);
 
-  // Streamlined suit, raised web-line arm, and lens-shaped mask distinguish this hero.
-  pg.beginShape();
-  pg.vertex(cx - 28, cy - 35);
-  pg.vertex(cx - 66, cy - 8);
-  pg.vertex(cx - 98, cy + 43);
-  pg.vertex(cx - 79, cy + 57);
-  pg.vertex(cx - 35, cy + 19);
-  pg.vertex(cx - 17, cy - 7);
-  pg.endShape(CLOSE);
-  pg.beginShape();
-  pg.vertex(cx + 27, cy - 37);
-  pg.vertex(cx + 59, cy - 72);
-  pg.vertex(cx + 92, cy - 108);
-  pg.vertex(cx + 108, cy - 91);
-  pg.vertex(cx + 79, cy - 49);
-  pg.vertex(cx + 39, cy - 4);
-  pg.endShape(CLOSE);
-  pg.circle(cx + 102, cy - 108, 28);
-
-  pg.rectMode(CENTER);
-  pg.rect(cx - 20, cy + 91, 27, 59, 4);
-  pg.beginShape();
-  pg.vertex(cx - 36, cy + 111);
-  pg.vertex(cx - 5, cy + 111);
-  pg.vertex(cx - 5, cy + 162);
-  pg.vertex(cx - 49, cy + 162);
-  pg.vertex(cx - 49, cy + 146);
-  pg.vertex(cx - 36, cy + 142);
-  pg.endShape(CLOSE);
-  pg.rect(cx + 20, cy + 91, 27, 59, 4);
-  pg.beginShape();
-  pg.vertex(cx + 5, cy + 111);
-  pg.vertex(cx + 36, cy + 111);
-  pg.vertex(cx + 36, cy + 142);
-  pg.vertex(cx + 49, cy + 146);
-  pg.vertex(cx + 49, cy + 162);
-  pg.vertex(cx + 5, cy + 162);
-  pg.endShape(CLOSE);
-
-  pg.beginShape();
-  pg.vertex(cx - 35, cy - 39);
-  pg.vertex(cx + 35, cy - 39);
-  pg.vertex(cx + 31, cy + 60);
-  pg.vertex(cx, cy + 73);
-  pg.vertex(cx - 31, cy + 60);
-  pg.endShape(CLOSE);
-  pg.rect(cx, cy + 50, 64, 14, 3);
-
-  pg.circle(cx, cy - 99, 94);
   if (mode === "outline") {
-    pg.beginShape();
-    pg.vertex(cx - 38, cy - 108);
-    pg.vertex(cx - 17, cy - 119);
-    pg.vertex(cx - 7, cy - 91);
-    pg.vertex(cx - 25, cy - 81);
-    pg.endShape(CLOSE);
-    pg.beginShape();
-    pg.vertex(cx + 38, cy - 108);
-    pg.vertex(cx + 17, cy - 119);
-    pg.vertex(cx + 7, cy - 91);
-    pg.vertex(cx + 25, cy - 81);
-    pg.endShape(CLOSE);
+    pg.strokeWeight(1.4);
+    // Elliptical rings and spokes stay inside the mask silhouette.
+    for (let i=0; i<12; i++) {
+      const angle = i * TWO_PI / 12;
+      pg.line(cx, cy-107, cx+41*cos(angle), cy-107+49*sin(angle));
+    }
+    for (const size of [0.35, 0.65]) pg.ellipse(cx, cy-107, 83*size, 100*size);
+
+    // Clear web lines under each eye lens, leaving the paint layer visible.
+    const eye = [[8,-109],[33,-130],[30,-108],[22,-91],[12,-94]];
+    for (const side of [-1,1]) {
+      const lens = eye.map(([x,y]) => [side*x,y]);
+      pg.erase();
+      pg.fill(255);
+      heroPolygon(pg, cx, cy, lens);
+      pg.noErase();
+      pg.noFill();
+      pg.stroke(15);
+      pg.strokeWeight(3);
+      heroPolygon(pg, cx, cy, lens);
+    }
+
+    pg.strokeWeight(1.4);
+    // Construct each web section against the same edges as its suit region.
+    for (const side of [-1,1]) {
+      const panel = [[18,-38],[34,-38],[30,57],[15,62.5]]
+        .map(([x,y]) => [side*x,y]);
+      pg.line(cx+side*18, cy-38, cx+side*15, cy+62.5);
+      drawWebCrossLine(pg, cx, cy, panel, [side*26,-38], [-side,95]);
+      for (const y of [-24,-8,8,24,40]) {
+        drawWebCrossLine(pg, cx, cy, panel, [0,y], [side*15,3]);
+      }
+      const boot = [[6,108],[33.78,108],[39,145],[51,153],[51,164],[7,164]]
+        .map(([x,y]) => [side*x,y]);
+      pg.line(cx+side*6, cy+108, cx+side*33.78, cy+108);
+      drawWebCrossLine(pg, cx, cy, boot, [side*20,108], [side*3,56]);
+      for (const y of [122,136,150]) {
+        drawWebCrossLine(pg, cx, cy, boot, [0,y], [side*28,3]);
+      }
+    }
+    for (let i=0; i<4; i++) {
+      drawWebCrossLine(pg, cx, cy, leftArm, [-58-i*8,-17+i*13], [16,15]);
+      drawWebCrossLine(pg, cx, cy, rightArm, [49+i*10,-54-i*13], [16,16-i]);
+    }
+    // Eight-legged spider emblem centered on the chest.
+    pg.strokeWeight(2.3);
+    pg.ellipse(cx, cy-12, 8, 10);
+    pg.ellipse(cx, cy+1, 11, 18);
+    for (const side of [-1,1]) {
+      for (let i=0; i<4; i++) {
+        const y = -12+i*6;
+        pg.line(cx+side*4,cy+y,cx+side*11,cy+y+(i<2?-7:7));
+        pg.line(cx+side*11,cy+y+(i<2?-7:7),cx+side*13,cy+y+(i<2?-14:14));
+      }
+    }
   }
   pg.pop();
+}
+
+// Intersect a web line with its closed panel so both ends meet the outline.
+function drawWebCrossLine(pg, cx, cy, polygon, origin, direction) {
+  const cross = (a, b) => a[0]*b[1] - a[1]*b[0];
+  const hits = [];
+  for (let i=0; i<polygon.length; i++) {
+    const a = polygon[i];
+    const b = polygon[(i+1) % polygon.length];
+    const edge = [b[0]-a[0], b[1]-a[1]];
+    const offset = [a[0]-origin[0], a[1]-origin[1]];
+    const denominator = cross(direction, edge);
+    if (Math.abs(denominator) < 0.000001) continue;
+    const t = cross(offset, edge) / denominator;
+    const u = cross(offset, direction) / denominator;
+    if (u >= 0 && u <= 1) hits.push(t);
+  }
+  hits.sort((a,b) => a-b);
+  const unique = hits.filter((t,i) => i === 0 || Math.abs(t-hits[i-1]) > 0.000001);
+  for (let i=0; i+1<unique.length; i+=2) {
+    pg.line(cx+origin[0]+unique[i]*direction[0], cy+origin[1]+unique[i]*direction[1],
+      cx+origin[0]+unique[i+1]*direction[0], cy+origin[1]+unique[i+1]*direction[1]);
+  }
 }
