@@ -6,7 +6,8 @@
 2. Install the **Live Server** extension if it is not already installed.
 3. In the Explorer, right-click `index.html` and select **Open with Live Server**.
 4. The Hero Academy menu opens. Choose **Start**, then select **Color in the Lines**,
-   **Crush the Villain**, or **Superhero Typing**.
+   **Crush the Villain**, or **Superhero Typing**. Choose Easy, Normal, or Hard above
+   the exercise cards.
 
 The page loads the p5.js library from a CDN, so an internet connection is needed.
 `MasterProj.js` is the sketch loaded by `index.html`.
@@ -17,3 +18,14 @@ The sound toggle and volume setting control the typing feedback sounds.
 
 The color and villain exercises run in isolated frames so their standalone sketches
 can be used without interfering with the main menu. Use **Back to games** to return.
+
+Each exercise has Easy, Normal, and Hard variations. Passing accuracy is 70% on Easy,
+85% on Normal, and 95% on Hard. Accuracy measures coloring strokes inside the lines,
+correct typing taps for each phrase, or average pinch-position accuracy across the
+villain targets. The difficulty selector applies to all exercises. Easy coloring uses a
+simple hero and larger brush; Normal adds a lightning emblem; Hard adds armor details
+and a smaller brush. The villain challenge
+increases from one large target, to two targets, to three smaller targets. Typing
+progresses from short words and phrases, to sentences, to longer rescue briefings.
+The coloring hero and the villain/rescue hero also have different custom-drawn looks
+at each difficulty.

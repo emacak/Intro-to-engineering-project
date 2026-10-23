@@ -3,18 +3,48 @@ let clickUsed = false;
 let mainCanvas;
 let exerciseFrame;
 let exerciseBackButton;
-let typingPhrases = [
-  "Heroes never give up.",
-  "I can save the city!",
-  "Courage is my superpower.",
-  "Together, we are stronger.",
-  "Every hero starts somewhere."
-];
+const typingPhrasesByDifficulty = {
+  Easy: [
+    "I am a hero.",
+    "Save the day!",
+    "I can be brave.",
+    "Help our city.",
+    "Heroes help."
+  ],
+  Normal: [
+    "Heroes never give up.",
+    "I can save the city!",
+    "Courage is my superpower.",
+    "Together, we are stronger.",
+    "Every hero starts somewhere."
+  ],
+  Hard: [
+    "A brave hero protects everyone.",
+    "Together, we can rescue the city!",
+    "Courage grows when we help others.",
+    "Use your powers to make a difference.",
+    "The strongest heroes never give up."
+  ]
+};
+const typingChallengeNames = {
+  Easy: "Hero Word Warm-up",
+  Normal: "Superhero Sentence Sprint",
+  Hard: "Advanced Rescue Briefing"
+};
+const PASS_ACCURACY_BY_DIFFICULTY = {
+  Easy: 70,
+  Normal: 85,
+  Hard: 95
+};
+let typingPhrases = typingPhrasesByDifficulty.Normal;
 let typingPhraseIndex = 0;
 let typingAnswer = "";
 let typingMessage = "";
 let typingMessageUntil = 0;
 let typingAudioContext;
+let typingCorrectTaps = 0;
+let typingTotalTaps = 0;
+let typingLastAccuracy = 0;
 let settings = {
   name: "",
   sound: true,
@@ -125,6 +155,11 @@ function drawMenu() {
   rect(0, 0, width - 40, height - 40, 16);
   pop();
 
+  drawComicBurst(135, 255, 95, color(255, 205, 75));
+  drawSuperhero(135, 270, 1.25);
+  drawComicBurst(665, 255, 95, color(150, 110, 235));
+  drawVillain(665, 270, 1.15);
+
   push();
   translate(width / 2, 90);
   fill(245);
@@ -145,6 +180,130 @@ function drawMenu() {
   drawUIButton(width / 2, 360, 220, 50, "Settings", "settings");
 }
 
+function drawComicBurst(x, y, size, burstColor) {
+  push();
+  translate(x, y);
+  noStroke();
+  fill(burstColor);
+  beginShape();
+  for (let i = 0; i < 20; i++) {
+    const angle = TWO_PI * i / 20;
+    const radius = i % 2 === 0 ? size : size * 0.83;
+    vertex(cos(angle) * radius, sin(angle) * radius);
+  }
+  endShape(CLOSE);
+  fill(255, 255, 255, 100);
+  circle(0, 0, size * 1.15);
+  pop();
+}
+
+function drawSuperhero(x, y, scaleFactor) {
+  push();
+  translate(x, y);
+  scale(scaleFactor);
+  stroke(35, 40, 65);
+  strokeWeight(3);
+  strokeJoin(ROUND);
+
+  fill(207, 48, 65);
+  beginShape();
+  vertex(-25, -22);
+  vertex(25, -22);
+  vertex(39, 43);
+  vertex(0, 30);
+  vertex(-39, 43);
+  endShape(CLOSE);
+
+  fill(44, 102, 224);
+  rect(0, 18, 46, 48, 12);
+
+  fill(255, 205, 65);
+  beginShape();
+  vertex(0, 1);
+  vertex(16, 11);
+  vertex(10, 29);
+  vertex(-10, 29);
+  vertex(-16, 11);
+  endShape(CLOSE);
+  noStroke();
+  fill(44, 102, 224);
+  textAlign(CENTER, CENTER);
+  textStyle(BOLD);
+  textSize(17);
+  text("H", 0, 15);
+
+  stroke(35, 40, 65);
+  strokeWeight(3);
+  fill(255, 202, 158);
+  circle(0, -24, 43);
+
+  fill(207, 48, 65);
+  beginShape();
+  vertex(-24, -29);
+  vertex(-16, -47);
+  vertex(0, -41);
+  vertex(16, -47);
+  vertex(24, -29);
+  vertex(12, -34);
+  vertex(0, -30);
+  vertex(-12, -34);
+  endShape(CLOSE);
+
+  noStroke();
+  fill(35, 40, 65);
+  circle(-8, -22, 4);
+  circle(8, -22, 4);
+  noFill();
+  stroke(140, 54, 48);
+  strokeWeight(2);
+  arc(0, -17, 12, 8, 0, PI);
+  pop();
+}
+
+function drawVillain(x, y, scaleFactor) {
+  push();
+  translate(x, y);
+  scale(scaleFactor);
+  stroke(42, 35, 74);
+  strokeWeight(3);
+  strokeJoin(ROUND);
+
+  fill(92, 60, 150);
+  beginShape();
+  vertex(-22, -15);
+  vertex(22, -15);
+  vertex(43, 42);
+  vertex(0, 32);
+  vertex(-43, 42);
+  endShape(CLOSE);
+
+  fill(95, 210, 124);
+  ellipse(0, -22, 48, 53);
+
+  fill(92, 60, 150);
+  beginShape();
+  vertex(-27, -29);
+  vertex(-19, -49);
+  vertex(-7, -34);
+  vertex(0, -52);
+  vertex(9, -34);
+  vertex(21, -47);
+  vertex(27, -25);
+  endShape(CLOSE);
+
+  noStroke();
+  fill(42, 35, 74);
+  triangle(-18, -20, -5, -25, -9, -14);
+  triangle(18, -20, 5, -25, 9, -14);
+  stroke(42, 35, 74);
+  strokeWeight(2);
+  line(-11, -3, 11, -3);
+  noStroke();
+  fill(255, 205, 65);
+  circle(0, 14, 13);
+  pop();
+}
+
 function drawSelection() {
   background(28, 36, 52);
 
@@ -155,6 +314,7 @@ function drawSelection() {
   text("Choose a Game", 0, 0);
   pop();
 
+  drawUIButton(width / 2, 125, 220, 38, "Difficulty: " + settings.difficulty, "cycleDifficulty");
   drawGameCard(155, 250, "Color in the Lines", "Color the superhero carefully", color(46, 140, 88), "colorGame");
   drawGameCard(400, 250, "Crush the Villain", "Pinch the villain to save the hero", color(176, 92, 52), "villainGame");
   drawGameCard(645, 250, "Superhero Typing", "Tap keys to save the city", color(190, 54, 58), "typing");
@@ -164,7 +324,11 @@ function drawSelection() {
 
 function enterExercise(fileName) {
   currentScreen = fileName === "ColorGame.js" ? "colorExercise" : "villainExercise";
-  exerciseFrame.attribute("src", "./exercise.html?sketch=" + encodeURIComponent(fileName));
+  exerciseFrame.attribute(
+    "src",
+    "./exercise.html?sketch=" + encodeURIComponent(fileName) +
+      "&difficulty=" + encodeURIComponent(settings.difficulty)
+  );
   mainCanvas.hide();
   exerciseFrame.show();
   exerciseBackButton.show();
@@ -196,15 +360,18 @@ function drawGameCard(x, y, title, blurb, cardColor, action) {
   fill(cardColor);
   rect(0, 0, w, h, 16);
 
-  fill(255, 255, 255, 40);
-  rect(0, -34, 120, 30, 10);
+  if (action === "villainGame") {
+    drawVillain(0, -33, 0.43);
+  } else {
+    drawSuperhero(0, -33, 0.43);
+  }
 
   fill(255);
   textSize(18);
-  text(title, 0, -5);
+  text(title, 0, 9);
   textSize(13);
   fill(230);
-  text(blurb, 0, 25);
+  text(blurb, 0, 39);
   pop();
 
   if (hovering && mouseIsPressed && !clickUsed) {
@@ -218,7 +385,7 @@ function drawTypingGame() {
 
   fill(255, 220, 92);
   textSize(15);
-  text("SUPERHERO TRAINING", width / 2, 35);
+  text(typingChallengeNames[settings.difficulty].toUpperCase(), width / 2, 35);
 
   fill(255);
   textSize(28);
@@ -227,27 +394,35 @@ function drawTypingGame() {
   fill(194, 205, 225);
   textSize(16);
   text("Mission " + (typingPhraseIndex + 1) + " of " + typingPhrases.length, width / 2, 105);
+  textSize(13);
+  fill(194, 205, 225);
+  const passAccuracy = PASS_ACCURACY_BY_DIFFICULTY[settings.difficulty];
+  text(
+    "Accuracy: " + getTypingAccuracyDisplay() + "% (" + passAccuracy + "% to pass)",
+    width / 2,
+    128
+  );
 
   fill(25, 35, 57);
   noStroke();
-  rect(width / 2, 150, 700, 58, 12);
+  rect(width / 2, 174, 700, 58, 12);
   fill(255);
   textSize(21);
-  text(typingPhrases[typingPhraseIndex], width / 2, 150);
+  text(typingPhrases[typingPhraseIndex], width / 2, 174);
 
   fill(194, 205, 225);
   textSize(14);
-  text("Your taps:", 70, 205);
+  text("Your taps:", 70, 222);
   drawTypedAnswer();
 
   if (typingMessage && millis() < typingMessageUntil) {
     fill(100, 230, 145);
     textSize(18);
-    text(typingMessage, width / 2, 245);
+    text(typingMessage, width / 2, 255);
   } else {
     fill(194, 205, 225);
     textSize(14);
-    text("Tap a letter, SPACE, punctuation, or DEL to fix a tap.", width / 2, 245);
+    text("Tap a letter, SPACE, punctuation, or DEL to fix a tap.", width / 2, 255);
   }
 
   drawTypingKeyboard();
@@ -265,13 +440,13 @@ function drawTypedAnswer() {
   textFont("monospace");
   if (typingAnswer.length === 0) {
     fill(115, 130, 155);
-    text("Tap the on-screen keys below", startX, 225);
+    text("Tap the on-screen keys below", startX, 242);
   } else {
     for (let i = 0; i < typingAnswer.length; i++) {
       const characterIsCorrect =
         typingAnswer[i].toLowerCase() === target[i].toLowerCase();
       fill(characterIsCorrect ? color(100, 230, 145) : color(255, 100, 105));
-      text(typingAnswer[i], cursorX, 225);
+      text(typingAnswer[i], cursorX, 242);
       cursorX += textWidth(typingAnswer[i]);
     }
   }
@@ -282,23 +457,23 @@ function drawTypedAnswer() {
 function drawTypingKeyboard() {
   const firstRow = "QWERTYUIOP";
   for (let i = 0; i < firstRow.length; i++) {
-    drawTypingKey(110 + i * 58, 290, 52, firstRow[i], firstRow[i].toLowerCase());
+    drawTypingKey(110 + i * 58, 305, 52, firstRow[i], firstRow[i].toLowerCase());
   }
 
   const secondRow = "ASDFGHJKL";
   for (let i = 0; i < secondRow.length; i++) {
-    drawTypingKey(142 + i * 58, 333, 52, secondRow[i], secondRow[i].toLowerCase());
+    drawTypingKey(142 + i * 58, 348, 52, secondRow[i], secondRow[i].toLowerCase());
   }
 
   const thirdRow = "ZXCVBNM";
   for (let i = 0; i < thirdRow.length; i++) {
-    drawTypingKey(56 + i * 50, 376, 45, thirdRow[i], thirdRow[i].toLowerCase());
+    drawTypingKey(56 + i * 50, 391, 45, thirdRow[i], thirdRow[i].toLowerCase());
   }
-  drawTypingKey(482, 376, 145, "SPACE", " ");
-  drawTypingKey(569, 376, 78, "DEL", "delete");
-  drawTypingKey(668, 376, 40, ",", ",");
-  drawTypingKey(716, 376, 40, ".", ".");
-  drawTypingKey(764, 376, 40, "!", "!");
+  drawTypingKey(482, 391, 145, "SPACE", " ");
+  drawTypingKey(569, 391, 78, "DEL", "delete");
+  drawTypingKey(668, 391, 40, ",", ",");
+  drawTypingKey(716, 391, 40, ".", ".");
+  drawTypingKey(764, 391, 40, "!", "!");
 }
 
 function drawTypingKey(x, y, keyWidth, label, value) {
@@ -334,15 +509,34 @@ function pressTypingKey(value) {
   }
 
   typingAnswer += value;
+  typingTotalTaps++;
   const index = typingAnswer.length - 1;
   if (typingAnswer[index].toLowerCase() !== target[index].toLowerCase()) {
     playTypingFeedback(false);
     return;
   }
 
+  typingCorrectTaps++;
   if (typingAnswer.toLowerCase() === target.toLowerCase()) {
     playTypingFeedback(true);
+    const accuracy = getTypingAccuracy();
+    const exactAccuracy = (typingCorrectTaps / typingTotalTaps) * 100;
+    const passAccuracy = PASS_ACCURACY_BY_DIFFICULTY[settings.difficulty];
+    if (exactAccuracy < passAccuracy) {
+      typingMessage =
+        "Accuracy " + accuracy + "%. Need " + passAccuracy + "% - try this phrase again.";
+      typingMessageUntil = millis() + 1800;
+      typingAnswer = "";
+      typingCorrectTaps = 0;
+      typingTotalTaps = 0;
+      typingLastAccuracy = accuracy;
+      return;
+    }
+
     typingPhraseIndex++;
+    typingCorrectTaps = 0;
+    typingTotalTaps = 0;
+    typingLastAccuracy = 0;
     if (typingPhraseIndex === typingPhrases.length) {
       currentScreen = "typingComplete";
     } else {
@@ -351,6 +545,16 @@ function pressTypingKey(value) {
       typingMessageUntil = millis() + 800;
     }
   }
+}
+
+function getTypingAccuracy() {
+  return typingTotalTaps > 0
+    ? Math.floor((typingCorrectTaps / typingTotalTaps) * 100)
+    : 100;
+}
+
+function getTypingAccuracyDisplay() {
+  return typingTotalTaps > 0 ? getTypingAccuracy() : typingLastAccuracy;
 }
 
 function playTypingFeedback(correct) {
@@ -397,7 +601,7 @@ function drawTypingComplete() {
   background(38, 32, 52);
   fill(255, 220, 92);
   textSize(36);
-  text("MISSION COMPLETE!", width / 2, 170);
+  text("TRAINING COMPLETE!", width / 2, 170);
   fill(255);
   textSize(20);
   text("You saved the city, one word at a time.", width / 2, 230);
@@ -558,7 +762,7 @@ function useButton(action) {
   if (action === "colorGame") {
     enterExercise("ColorGame.js");
   } else if (action === "villainGame") {
-    enterExercise("cursh-the-villian.js");
+    enterExercise("Crushthevillian.js");
   } else if (action === "toggleSound") {
     settings.sound = !settings.sound;
   } else if (action === "toggleHaptic") {
@@ -572,15 +776,23 @@ function useButton(action) {
       settings.difficulty = "Easy";
     }
   } else if (action === "restartTyping") {
+    typingPhrases = typingPhrasesByDifficulty[settings.difficulty];
     typingPhraseIndex = 0;
     typingAnswer = "";
     typingMessage = "";
+    typingCorrectTaps = 0;
+    typingTotalTaps = 0;
+    typingLastAccuracy = 0;
     currentScreen = "typing";
   } else {
     if (action === "typing") {
+      typingPhrases = typingPhrasesByDifficulty[settings.difficulty];
       typingPhraseIndex = 0;
       typingAnswer = "";
       typingMessage = "";
+      typingCorrectTaps = 0;
+      typingTotalTaps = 0;
+      typingLastAccuracy = 0;
     }
     currentScreen = action;
   }

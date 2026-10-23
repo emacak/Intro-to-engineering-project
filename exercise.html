@@ -24,12 +24,16 @@
     <script>
       const exercises = {
         "ColorGame.js": "ColorGame.js",
-        "cursh-the-villian.js": "cursh-the-villian.js"
+        "Crushthevillian.js": "Crushthevillian.js"
       };
       const requestedExercise = new URLSearchParams(window.location.search).get("sketch");
       const exerciseFile = exercises[requestedExercise];
+      const difficulty = new URLSearchParams(window.location.search).get("difficulty");
 
       if (exerciseFile) {
+        window.exerciseDifficulty = ["Easy", "Normal", "Hard"].includes(difficulty)
+          ? difficulty
+          : "Normal";
         const script = document.createElement("script");
         script.src = "./" + exerciseFile;
         document.body.appendChild(script);

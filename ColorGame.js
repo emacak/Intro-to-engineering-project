@@ -7,6 +7,14 @@ let gameState = "NO_COLOR"; // "NO_COLOR" | "COLOR_SELECTED" | "DRAWING" | "END"
 let activeTool = "brush";   // "brush" | "eraser"
 let selectedColor = null;
 let brushSize = 18;
+let exerciseDifficulty = "Normal";
+let passedExercise = false;
+let passAccuracy = 85;
+const DIFFICULTY_SETTINGS = {
+  Easy: { brushSize: 28, passAccuracy: 70 },
+  Normal: { brushSize: 18, passAccuracy: 85 },
+  Hard: { brushSize: 10, passAccuracy: 95 }
+};
 
 let feedbackMessage = "Select a color on the left to begin!";
 let feedbackType = "neutral"; // "neutral" | "positive" | "negative"
@@ -42,6 +50,16 @@ const FINISH_BTN = { x: 685, y: 435, w: 120, h: 42 };
 const CLEAR_BTN  = { x: 685, y: 380, w: 120, h: 38 };
 
 function setup() {
+  exerciseDifficulty = window.exerciseDifficulty || "Normal";
+  const difficultySettings = DIFFICULTY_SETTINGS[exerciseDifficulty];
+  brushSize = difficultySettings.brushSize;
+  passAccuracy = difficultySettings.passAccuracy;
+  feedbackMessage = exerciseDifficulty === "Easy"
+    ? "Easy: Color the night guardian's suit and cape."
+    : exerciseDifficulty === "Normal"
+      ? "Normal: Color the hero and the lightning emblem."
+      : "Hard: Color the web-powered hero's detailed suit.";
+
   let cnv = createCanvas(800, 500);
   if (cnv && cnv.elt) {
     cnv.elt.setAttribute("tabindex", "0");
@@ -67,7 +85,7 @@ function draw() {
   textAlign(CENTER, CENTER);
   textStyle(BOLD);
   textSize(22);
-  text("COLOR IN THE LINES!", BOARD.x + BOARD.w / 2, 26);
+  text("COLOR IN THE LINES - " + exerciseDifficulty.toUpperCase(), BOARD.x + BOARD.w / 2, 26);
   pop();
 
   // 2. Feedback Banner
@@ -327,7 +345,7 @@ function drawToolsUI() {
   }
 
   const total = insideStrokeCount + outsideStrokeCount;
-  const accuracy = total > 0 ? Math.round((insideStrokeCount / total) * 100) : 100;
+  const accuracy = getColoringAccuracy();
 
   push();
   fill(45);
@@ -336,6 +354,8 @@ function drawToolsUI() {
   textSize(13);
   textStyle(BOLD);
   text("Accuracy: " + accuracy + "%", 685, 265);
+  textSize(10);
+  text(passAccuracy + "% required to pass", 685, 250);
   textStyle(NORMAL);
   textSize(11);
   fill(90);
@@ -386,7 +406,8 @@ function drawStateTrackerUI() {
 
 function drawEndOverlay() {
   const total = insideStrokeCount + outsideStrokeCount;
-  const accuracy = total > 0 ? Math.round((insideStrokeCount / total) * 100) : 0;
+  const accuracy = getColoringAccuracy();
+  passedExercise = total > 0 && (insideStrokeCount / total) * 100 >= passAccuracy;
 
   push();
   fill(15, 23, 42, 190);
@@ -404,18 +425,22 @@ function drawEndOverlay() {
   textAlign(CENTER, CENTER);
   textStyle(BOLD);
   textSize(28);
-  text("Exercise Complete!", width / 2, height / 2 - 70);
+  text(passedExercise ? "Level Passed!" : "Try Again", width / 2, height / 2 - 70);
 
   textSize(18);
   if (total === 0) {
     fill(180, 60, 60);
     text("You didn't color anything yet!", width / 2, height / 2 - 20);
-  } else if (accuracy >= 80) {
+  } else if (passedExercise) {
     fill(30, 140, 60);
-    text("Amazing Job! " + accuracy + "% Inside the Lines!", width / 2, height / 2 - 20);
+    text("Great job! " + accuracy + "% accuracy.", width / 2, height / 2 - 20);
   } else {
     fill(200, 110, 20);
-    text("Good Try! " + accuracy + "% Inside the Lines.", width / 2, height / 2 - 20);
+    text(
+      accuracy + "% accuracy. You need " + passAccuracy + "% to pass.",
+      width / 2,
+      height / 2 - 20
+    );
   }
 
   fill(90);
@@ -432,8 +457,13 @@ function drawEndOverlay() {
   fill(255);
   textStyle(BOLD);
   textSize(16);
-  text("Color Again", width / 2, height / 2 + 75);
+  text("Try Again", width / 2, height / 2 + 75);
   pop();
+}
+
+function getColoringAccuracy() {
+  const total = insideStrokeCount + outsideStrokeCount;
+  return total > 0 ? Math.floor((insideStrokeCount / total) * 100) : 0;
 }
 
 function isInsideBoard(x, y) {
@@ -473,9 +503,101 @@ function buildSuperheroArtwork() {
 
   // Draw the crisp black outlines on top
   drawHeroShapes(outlineLayer, cx, cy, "outline");
+  drawDifficultyDetails(maskLayer, cx, cy, "mask");
+  drawDifficultyDetails(outlineLayer, cx, cy, "outline");
+}
+
+function drawDifficultyDetails(pg, cx, cy, mode) {
+  pg.push();
+  pg.noFill();
+  pg.stroke(mode === "mask" ? color(0, 255, 0) : color(15));
+  pg.strokeWeight(mode === "mask" ? 4 : 3);
+  pg.strokeJoin(ROUND);
+  pg.strokeCap(ROUND);
+
+  if (exerciseDifficulty === "Easy") {
+    pg.beginShape();
+    pg.vertex(cx - 30, cy + 1);
+    pg.vertex(cx - 12, cy - 7);
+    pg.vertex(cx, cy - 2);
+    pg.vertex(cx + 12, cy - 7);
+    pg.vertex(cx + 30, cy + 1);
+    pg.vertex(cx + 12, cy + 5);
+    pg.vertex(cx, cy + 13);
+    pg.vertex(cx - 12, cy + 5);
+    pg.endShape(CLOSE);
+    pg.line(cx - 13, cy - 102, cx - 24, cy - 112);
+    pg.line(cx + 13, cy - 102, cx + 24, cy - 112);
+  } else if (exerciseDifficulty === "Hard") {
+    for (let ray = -2; ray <= 2; ray++) {
+      pg.line(cx, cy - 120, cx + ray * 17, cy - 78);
+      pg.line(cx, cy - 78, cx + ray * 14, cy - 39);
+    }
+    pg.arc(cx, cy - 102, 64, 34, PI, TWO_PI);
+    pg.arc(cx, cy - 83, 42, 24, 0, PI);
+    pg.line(cx, cy - 49, cx, cy - 23);
+    pg.line(cx, cy - 23, cx - 18, cy - 2);
+    pg.line(cx, cy - 23, cx + 18, cy - 2);
+    pg.line(cx - 29, cy - 28, cx + 29, cy - 28);
+    pg.line(cx - 24, cy - 12, cx + 24, cy - 12);
+    pg.line(cx - 18, cy + 4, cx + 18, cy + 4);
+  } else {
+    pg.beginShape();
+    pg.vertex(cx - 15, cy - 12);
+    pg.vertex(cx + 2, cy - 12);
+    pg.vertex(cx - 4, cy + 1);
+    pg.vertex(cx + 14, cy + 1);
+    pg.vertex(cx - 8, cy + 22);
+    pg.vertex(cx - 2, cy + 7);
+    pg.vertex(cx - 18, cy + 7);
+    pg.endShape(CLOSE);
+  }
+
+  if (exerciseDifficulty === "Normal") {
+    pg.beginShape();
+    pg.vertex(cx - 43, cy - 99);
+    pg.vertex(cx, cy - 110);
+    pg.vertex(cx + 43, cy - 99);
+    pg.vertex(cx + 32, cy - 84);
+    pg.vertex(cx, cy - 91);
+    pg.vertex(cx - 32, cy - 84);
+    pg.endShape(CLOSE);
+  }
+
+  if (exerciseDifficulty === "Hard") {
+    pg.beginShape();
+    pg.vertex(cx - 54, cy - 48);
+    pg.vertex(cx - 34, cy - 63);
+    pg.vertex(cx - 24, cy - 38);
+    pg.vertex(cx - 50, cy - 20);
+    pg.endShape(CLOSE);
+    pg.beginShape();
+    pg.vertex(cx + 54, cy - 48);
+    pg.vertex(cx + 34, cy - 63);
+    pg.vertex(cx + 24, cy - 38);
+    pg.vertex(cx + 50, cy - 20);
+    pg.endShape(CLOSE);
+    pg.line(cx - 31, cy - 29, cx - 22, cy + 32);
+    pg.line(cx + 31, cy - 29, cx + 22, cy + 32);
+    pg.line(cx - 35, cy + 55, cx + 35, cy + 55);
+    pg.line(cx - 36, cy + 73, cx - 12, cy + 73);
+    pg.line(cx + 12, cy + 73, cx + 36, cy + 73);
+    pg.line(cx - 51, cy + 133, cx - 10, cy + 133);
+    pg.line(cx + 10, cy + 133, cx + 51, cy + 133);
+  }
+  pg.pop();
 }
 
 function drawHeroShapes(pg, cx, cy, mode) {
+  if (exerciseDifficulty === "Easy") {
+    drawNightGuardianShapes(pg, cx, cy, mode);
+    return;
+  }
+  if (exerciseDifficulty === "Hard") {
+    drawWebHeroShapes(pg, cx, cy, mode);
+    return;
+  }
+
   pg.push();
   if (mode === "mask") {
     pg.fill(0, 255, 0);
@@ -610,5 +732,197 @@ function drawHeroShapes(pg, cx, cy, mode) {
     pg.arc(cx, cy - 68, 28, 18, 0.15, PI - 0.15, CHORD);
   }
 
+  pg.pop();
+}
+
+function drawNightGuardianShapes(pg, cx, cy, mode) {
+  pg.push();
+  if (mode === "mask") {
+    pg.fill(0, 255, 0);
+    pg.stroke(0, 255, 0);
+    pg.strokeWeight(2);
+  } else if (mode === "erase") {
+    pg.fill(255);
+    pg.stroke(255);
+    pg.strokeWeight(2);
+  } else {
+    pg.noFill();
+    pg.stroke(15);
+    pg.strokeWeight(3.5);
+    pg.strokeJoin(ROUND);
+    pg.strokeCap(ROUND);
+  }
+
+  // Broad scalloped cape and compact cowl create an original night-guardian design.
+  pg.beginShape();
+  pg.vertex(cx - 31, cy - 40);
+  pg.vertex(cx - 78, cy - 8);
+  pg.vertex(cx - 112, cy + 126);
+  pg.vertex(cx - 68, cy + 116);
+  pg.vertex(cx - 39, cy + 137);
+  pg.vertex(cx - 10, cy + 119);
+  pg.vertex(cx + 20, cy + 137);
+  pg.vertex(cx + 48, cy + 116);
+  pg.vertex(cx + 72, cy + 126);
+  pg.vertex(cx + 79, cy - 8);
+  pg.vertex(cx + 31, cy - 40);
+  pg.endShape(CLOSE);
+
+  pg.beginShape();
+  pg.vertex(cx - 35, cy - 34);
+  pg.vertex(cx - 72, cy + 2);
+  pg.vertex(cx - 45, cy + 35);
+  pg.vertex(cx - 30, cy + 20);
+  pg.vertex(cx - 51, cy + 2);
+  pg.vertex(cx - 20, cy - 17);
+  pg.endShape(CLOSE);
+  pg.beginShape();
+  pg.vertex(cx + 30, cy - 34);
+  pg.vertex(cx + 68, cy - 75);
+  pg.vertex(cx + 88, cy - 61);
+  pg.vertex(cx + 44, cy - 10);
+  pg.endShape(CLOSE);
+  pg.circle(cx + 88, cy - 78, 31);
+
+  pg.rectMode(CENTER);
+  pg.rect(cx - 23, cy + 88, 28, 56, 4);
+  pg.rect(cx + 23, cy + 88, 28, 56, 4);
+  pg.beginShape();
+  pg.vertex(cx - 39, cy + 107);
+  pg.vertex(cx - 7, cy + 107);
+  pg.vertex(cx - 7, cy + 160);
+  pg.vertex(cx - 50, cy + 160);
+  pg.vertex(cx - 50, cy + 144);
+  pg.vertex(cx - 39, cy + 141);
+  pg.endShape(CLOSE);
+  pg.beginShape();
+  pg.vertex(cx + 7, cy + 107);
+  pg.vertex(cx + 39, cy + 107);
+  pg.vertex(cx + 39, cy + 141);
+  pg.vertex(cx + 50, cy + 144);
+  pg.vertex(cx + 50, cy + 160);
+  pg.vertex(cx + 7, cy + 160);
+  pg.endShape(CLOSE);
+
+  pg.beginShape();
+  pg.vertex(cx - 36, cy - 38);
+  pg.vertex(cx + 36, cy - 38);
+  pg.vertex(cx + 33, cy + 57);
+  pg.vertex(cx - 33, cy + 57);
+  pg.endShape(CLOSE);
+  pg.rect(cx, cy + 45, 70, 15, 3);
+  pg.rect(cx, cy + 45, 20, 19, 3);
+
+  pg.beginShape();
+  pg.vertex(cx - 52, cy - 91);
+  pg.vertex(cx - 58, cy - 148);
+  pg.vertex(cx - 25, cy - 127);
+  pg.vertex(cx, cy - 136);
+  pg.vertex(cx + 25, cy - 127);
+  pg.vertex(cx + 58, cy - 148);
+  pg.vertex(cx + 52, cy - 91);
+  pg.vertex(cx + 34, cy - 63);
+  pg.vertex(cx, cy - 52);
+  pg.vertex(cx - 34, cy - 63);
+  pg.endShape(CLOSE);
+
+  if (mode === "outline") {
+    pg.beginShape();
+    pg.vertex(cx - 37, cy - 91);
+    pg.vertex(cx - 20, cy - 100);
+    pg.vertex(cx - 5, cy - 88);
+    pg.vertex(cx - 20, cy - 80);
+    pg.endShape(CLOSE);
+    pg.beginShape();
+    pg.vertex(cx + 37, cy - 91);
+    pg.vertex(cx + 20, cy - 100);
+    pg.vertex(cx + 5, cy - 88);
+    pg.vertex(cx + 20, cy - 80);
+    pg.endShape(CLOSE);
+  }
+  pg.pop();
+}
+
+function drawWebHeroShapes(pg, cx, cy, mode) {
+  pg.push();
+  if (mode === "mask") {
+    pg.fill(0, 255, 0);
+    pg.stroke(0, 255, 0);
+    pg.strokeWeight(2);
+  } else if (mode === "erase") {
+    pg.fill(255);
+    pg.stroke(255);
+    pg.strokeWeight(2);
+  } else {
+    pg.noFill();
+    pg.stroke(15);
+    pg.strokeWeight(3.5);
+    pg.strokeJoin(ROUND);
+    pg.strokeCap(ROUND);
+  }
+
+  // Streamlined suit, raised web-line arm, and lens-shaped mask distinguish this hero.
+  pg.beginShape();
+  pg.vertex(cx - 28, cy - 35);
+  pg.vertex(cx - 66, cy - 8);
+  pg.vertex(cx - 98, cy + 43);
+  pg.vertex(cx - 79, cy + 57);
+  pg.vertex(cx - 35, cy + 19);
+  pg.vertex(cx - 17, cy - 7);
+  pg.endShape(CLOSE);
+  pg.beginShape();
+  pg.vertex(cx + 27, cy - 37);
+  pg.vertex(cx + 59, cy - 72);
+  pg.vertex(cx + 92, cy - 108);
+  pg.vertex(cx + 108, cy - 91);
+  pg.vertex(cx + 79, cy - 49);
+  pg.vertex(cx + 39, cy - 4);
+  pg.endShape(CLOSE);
+  pg.circle(cx + 102, cy - 108, 28);
+
+  pg.rectMode(CENTER);
+  pg.rect(cx - 20, cy + 91, 27, 59, 4);
+  pg.beginShape();
+  pg.vertex(cx - 36, cy + 111);
+  pg.vertex(cx - 5, cy + 111);
+  pg.vertex(cx - 5, cy + 162);
+  pg.vertex(cx - 49, cy + 162);
+  pg.vertex(cx - 49, cy + 146);
+  pg.vertex(cx - 36, cy + 142);
+  pg.endShape(CLOSE);
+  pg.rect(cx + 20, cy + 91, 27, 59, 4);
+  pg.beginShape();
+  pg.vertex(cx + 5, cy + 111);
+  pg.vertex(cx + 36, cy + 111);
+  pg.vertex(cx + 36, cy + 142);
+  pg.vertex(cx + 49, cy + 146);
+  pg.vertex(cx + 49, cy + 162);
+  pg.vertex(cx + 5, cy + 162);
+  pg.endShape(CLOSE);
+
+  pg.beginShape();
+  pg.vertex(cx - 35, cy - 39);
+  pg.vertex(cx + 35, cy - 39);
+  pg.vertex(cx + 31, cy + 60);
+  pg.vertex(cx, cy + 73);
+  pg.vertex(cx - 31, cy + 60);
+  pg.endShape(CLOSE);
+  pg.rect(cx, cy + 50, 64, 14, 3);
+
+  pg.circle(cx, cy - 99, 94);
+  if (mode === "outline") {
+    pg.beginShape();
+    pg.vertex(cx - 38, cy - 108);
+    pg.vertex(cx - 17, cy - 119);
+    pg.vertex(cx - 7, cy - 91);
+    pg.vertex(cx - 25, cy - 81);
+    pg.endShape(CLOSE);
+    pg.beginShape();
+    pg.vertex(cx + 38, cy - 108);
+    pg.vertex(cx + 17, cy - 119);
+    pg.vertex(cx + 7, cy - 91);
+    pg.vertex(cx + 25, cy - 81);
+    pg.endShape(CLOSE);
+  }
   pg.pop();
 }
