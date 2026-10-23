@@ -23,9 +23,17 @@ Each exercise has Easy, Normal, and Hard variations. Passing accuracy is 70% on 
 85% on Normal, and 95% on Hard. Accuracy measures coloring strokes inside the lines,
 correct typing taps for each phrase, or average pinch-position accuracy across the
 villain targets. The difficulty selector applies to all exercises. Easy coloring uses a
-simple hero and larger brush; Normal adds a lightning emblem; Hard adds armor details
-and a smaller brush. The villain challenge
+bat-themed hero and larger brush; Normal keeps the lightning-emblem hero; Hard uses a
+spider-themed hero and a smaller brush. The villain challenge
 increases from one large target, to two targets, to three smaller targets. Typing
 progresses from short words and phrases, to sentences, to longer rescue briefings.
 The coloring hero and the villain/rescue hero also have different custom-drawn looks
 at each difficulty.
+
+Choose **Character** from the main menu to customize a female or male superhero.
+Use the arrows to change shirt, pants, shoe colors, and hair or hat styles. The
+preview updates immediately, and choices are kept until the page is reloaded.
+
+In **Color in the Lines**, drag the **Thickness** slider beneath the accuracy display
+to change the brush and eraser width from 4 to 50 pixels. The cursor circle previews
+the selected thickness, which stays the same when switching tools or clearing the canvas.

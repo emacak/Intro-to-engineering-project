@@ -15,6 +15,7 @@ const DIFFICULTY_SETTINGS = {
   Normal: { brushSize: 18, passAccuracy: 85 },
   Hard: { brushSize: 10, passAccuracy: 95 }
 };
+let draggingSizeSlider = false;
 
 let feedbackMessage = "Select a color on the left to begin!";
 let feedbackType = "neutral"; // "neutral" | "positive" | "negative"
@@ -48,6 +49,7 @@ const TOOLS = [
 
 const FINISH_BTN = { x: 685, y: 435, w: 120, h: 42 };
 const CLEAR_BTN  = { x: 685, y: 380, w: 120, h: 38 };
+const SIZE_SLIDER = { x: 635, y: 345, w: 100, min: 4, max: 50 };
 
 function setup() {
   exerciseDifficulty = window.exerciseDifficulty || "Normal";
@@ -91,8 +93,10 @@ function draw() {
   // 2. Feedback Banner
   drawFeedbackBanner();
 
-  // 3. Handle painting if mouse is held inside the drawing board
-  if (mouseIsPressed && gameState !== "END") {
+  // 3. Keep slider drags separate from painting, even outside the slider.
+  if (draggingSizeSlider && gameState !== "END") {
+    updateBrushSize();
+  } else if (mouseIsPressed && gameState !== "END") {
     handleBoardPainting();
   }
 
@@ -144,7 +148,8 @@ function handleBoardPainting() {
 
   if (activeTool === "eraser") {
     paintLayer.erase();
-    paintLayer.strokeWeight(brushSize + 6);
+    paintLayer.strokeWeight(brushSize);
+    paintLayer.strokeCap(ROUND);
     paintLayer.line(plx, ply, lx, ly);
     paintLayer.noErase();
 
@@ -186,6 +191,16 @@ function mousePressed() {
     if (dist(mouseX, mouseY, width / 2, height / 2 + 75) < 80) {
       resetExercise();
     }
+    return;
+  }
+
+  if (
+    mouseX >= SIZE_SLIDER.x - 10 &&
+    mouseX <= SIZE_SLIDER.x + SIZE_SLIDER.w + 10 &&
+    Math.abs(mouseY - SIZE_SLIDER.y) <= 12
+  ) {
+    draggingSizeSlider = true;
+    updateBrushSize();
     return;
   }
 
@@ -238,7 +253,17 @@ function mousePressed() {
   }
 }
 
+function mouseReleased() {
+  draggingSizeSlider = false;
+}
+
+function updateBrushSize() {
+  const position = constrain((mouseX - SIZE_SLIDER.x) / SIZE_SLIDER.w, 0, 1);
+  brushSize = Math.round(SIZE_SLIDER.min + position * (SIZE_SLIDER.max - SIZE_SLIDER.min));
+}
+
 function resetExercise() {
+  draggingSizeSlider = false;
   paintLayer.clear();
   insideStrokeCount = 0;
   outsideStrokeCount = 0;
@@ -361,6 +386,21 @@ function drawToolsUI() {
   fill(90);
   text("In lines: " + insideStrokeCount, 685, 285);
   text("Outside: " + outsideStrokeCount, 685, 302);
+
+  textStyle(BOLD);
+  fill(45);
+  text("Thickness: " + brushSize + " px", 685, 325);
+  const sizeKnobX = map(brushSize, SIZE_SLIDER.min, SIZE_SLIDER.max,
+    SIZE_SLIDER.x, SIZE_SLIDER.x + SIZE_SLIDER.w);
+  stroke(180);
+  strokeWeight(6);
+  line(SIZE_SLIDER.x, SIZE_SLIDER.y, SIZE_SLIDER.x + SIZE_SLIDER.w, SIZE_SLIDER.y);
+  stroke("#3B82F6");
+  line(SIZE_SLIDER.x, SIZE_SLIDER.y, sizeKnobX, SIZE_SLIDER.y);
+  fill(255);
+  stroke(draggingSizeSlider ? 20 : "#3B82F6");
+  strokeWeight(2);
+  circle(sizeKnobX, SIZE_SLIDER.y, 16);
 
   rectMode(CENTER);
   const hoverClear =

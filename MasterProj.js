@@ -45,6 +45,31 @@ let typingAudioContext;
 let typingCorrectTaps = 0;
 let typingTotalTaps = 0;
 let typingLastAccuracy = 0;
+const character = { hero: "female", shirt: 0, pants: 0, shoes: 0, headwear: 0 };
+const characterOptions = {
+  shirt: [
+    { name: "Royal blue", color: "#477BEE" },
+    { name: "Crimson", color: "#e33030" },
+    { name: "Emerald", color: "#269C79" },
+    { name: "Violet", color: "#9862DD" }
+  ],
+  pants: [
+    { name: "Navy", color: "#263C70" },
+    { name: "Charcoal", color: "#343947" },
+    { name: "Purple", color: "#603E85" },
+    { name: "White", color: "#E1E8F3" }
+  ],
+  shoes: [
+    { name: "Gold", color: "#F4C653" },
+    { name: "Red", color: "#e33030" },
+    { name: "Black", color: "#252C3A" },
+    { name: "White", color: "#E1E8F3" }
+  ],
+  headwear: [
+    { name: "Hero hair" }, { name: "Short hair" }, { name: "Long hair" },
+    { name: "Cap" }, { name: "Helmet" }
+  ]
+};
 let settings = {
   name: "",
   sound: true,
@@ -611,18 +636,170 @@ function drawTypingComplete() {
 
 function drawCharacter() {
   background(72, 48, 96);
-
   push();
-  translate(width / 2, height / 2);
+  textAlign(CENTER, CENTER);
   fill(245);
-  textSize(36);
-  text("Character", 0, -40);
+  textSize(32);
+  text("Create Your Superhero", width / 2, 40);
+  fill(220, 210, 238);
+  textSize(14);
+  text("Choose a hero, then use the arrows to change their look.", width / 2, 76);
+
+  noStroke();
+  fill(52, 35, 74);
+  rect(215, 257, 290, 310, 18);
+  drawHeroPreview(215, 250);
+  fill(245);
   textSize(16);
-  fill(210);
-  text("Character select will go here", 0, 0);
+  text(character.hero === "female" ? "Female Superhero" : "Male Superhero", 215, 391);
+
+  drawCharacterChoice(475, 122, 170, 38, "Female Hero", character.hero === "female",
+    () => { character.hero = "female"; });
+  drawCharacterChoice(665, 122, 170, 38, "Male Hero", character.hero === "male",
+    () => { character.hero = "male"; });
+
+  const rows = [
+    { key: "shirt", label: "Shirt" },
+    { key: "pants", label: "Pants" },
+    { key: "shoes", label: "Shoes" },
+    { key: "headwear", label: "Hair / Hat" }
+  ];
+  rows.forEach((row, index) => {
+    const y = 191 + index * 61;
+    const options = characterOptions[row.key];
+    fill(220, 210, 238);
+    textSize(13);
+    text(row.label, 570, y - 21);
+    drawCharacterChoice(415, y + 5, 42, 32, "<", false,
+      () => cycleCharacterOption(row.key, -1));
+    drawCharacterChoice(725, y + 5, 42, 32, ">", false,
+      () => cycleCharacterOption(row.key, 1));
+    fill(255);
+    textSize(16);
+    text(options[character[row.key]].name, 570, y + 5);
+  });
+  fill(220, 210, 238);
+  textSize(12);
+  text("Your choices are kept while you play.", 560, 450);
   pop();
 
   drawUIButton(100, height - 50, 140, 44, "Back", "menu");
+}
+
+function cycleCharacterOption(part, direction) {
+  const count = characterOptions[part].length;
+  character[part] = (character[part] + direction + count) % count;
+}
+
+function drawCharacterChoice(x, y, w, h, label, selected, onSelect) {
+  const hovering = mouseX >= x - w / 2 && mouseX <= x + w / 2 &&
+    mouseY >= y - h / 2 && mouseY <= y + h / 2;
+  push();
+  rectMode(CENTER);
+  stroke(selected ? "#F4C653" : "#AA96C6");
+  strokeWeight(selected ? 3 : 1);
+  fill(hovering ? "#6C58A0" : selected ? "#534486" : "#3C2D56");
+  rect(x, y, w, h, 8);
+  noStroke();
+  fill(255);
+  textAlign(CENTER, CENTER);
+  textSize(16);
+  text(label, x, y);
+  pop();
+  if (hovering && mouseIsPressed && !clickUsed) {
+    clickUsed = true;
+    onSelect();
+  }
+}
+
+function drawHeroPreview(x, y) {
+  const female = character.hero === "female";
+  const headwear = character.headwear;
+  const longHair = headwear === 2 || (headwear === 0 && female);
+  const shirt = characterOptions.shirt[character.shirt].color;
+  const pants = characterOptions.pants[character.pants].color;
+  const shoes = characterOptions.shoes[character.shoes].color;
+  push();
+  translate(x, y);
+  rectMode(CENTER);
+  noStroke();
+  fill(30, 22, 48, 100);
+  ellipse(0, 117, 152, 18);
+
+  // Cape sits behind the entire outfit.
+  fill("#C43B64");
+  quad(-31, -39, 31, -39, 74, 99, -74, 99);
+  fill("#A82D56");
+  triangle(0, -30, 16, 97, -16, 97);
+  if (longHair) {
+    fill("#36263A");
+    rect(0, -55, 80, 100, 26);
+  }
+
+  // Pants and boots remain independently customizable for either hero.
+  fill(pants);
+  rect(-19, 65, 31, 72, 8);
+  rect(19, 65, 31, 72, 8);
+  fill(shoes);
+  rect(-22, 104, 38, 27, 7);
+  rect(22, 104, 38, 27, 7);
+
+  fill(shirt);
+  quad(-32, -38, 32, -38, female ? 24 : 32, 37, female ? -24 : -32, 37);
+  // Sleeves and hands form a classic superhero pose.
+  quad(-30, -36, -42, -30, -63, 10, -48, 19);
+  quad(30, -36, 42, -30, 63, 10, 48, 19);
+  fill("#DDA078");
+  circle(-55, 18, 18);
+  circle(55, 18, 18);
+  rect(0, -41, 20, 22, 5);
+  fill("#F4C653");
+  rect(0, 34, female ? 51 : 66, 10, 3);
+  fill("#FFF0A4");
+  quad(0, -18, 17, -3, 0, 17, -17, -3);
+  fill(shirt);
+  textSize(18);
+  textStyle(BOLD);
+  textAlign(CENTER, CENTER);
+  text("H", 0, -1);
+  textStyle(NORMAL);
+
+  fill("#EAB38D");
+  ellipse(0, -72, female ? 59 : 65, 69);
+  fill("#36263A");
+  arc(0, -88, 66, 43, PI, TWO_PI);
+  triangle(-32, -89, 22, -105, -20, -72);
+  if (longHair) {
+    rect(-31, -62, 12, 58, 6);
+    rect(31, -62, 12, 58, 6);
+  }
+
+  if (headwear === 3) {
+    fill(shirt);
+    arc(0, -93, 72, 47, PI, TWO_PI);
+    rect(15, -94, 90, 9, 4);
+  } else if (headwear === 4) {
+    fill(shoes);
+    arc(0, -85, 79, 69, PI, TWO_PI);
+    rect(-34, -76, 10, 34, 4);
+    rect(34, -76, 10, 34, 4);
+    fill("#FFF0A4");
+    rect(0, -108, 10, 19, 3);
+  }
+
+  fill(shirt);
+  rect(0, -73, 61, 21, 8);
+  fill(255);
+  ellipse(-13, -73, 13, 9);
+  ellipse(13, -73, 13, 9);
+  fill("#242739");
+  circle(-12, -73, 5);
+  circle(12, -73, 5);
+  noFill();
+  stroke("#713D3C");
+  strokeWeight(2);
+  arc(0, -57, 18, 10, 0, PI);
+  pop();
 }
 
 function drawSettings() {
