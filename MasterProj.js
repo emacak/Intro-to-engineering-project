@@ -19,7 +19,7 @@ const character = { hero: "female", shirt: 0, pants: 0, shoes: 0, headwear: 0 };
 const characterOptions = {
   shirt: [
     { name: "Royal blue", color: "#477BEE" },
-    { name: "Crimson", color: "#DC4563" },
+    { name: "Crimson", color: "#e33030" },
     { name: "Emerald", color: "#269C79" },
     { name: "Violet", color: "#9862DD" }
   ],
@@ -31,7 +31,7 @@ const characterOptions = {
   ],
   shoes: [
     { name: "Gold", color: "#F4C653" },
-    { name: "Red", color: "#DC4563" },
+    { name: "Red", color: "#e33030" },
     { name: "Black", color: "#252C3A" },
     { name: "White", color: "#E1E8F3" }
   ],
