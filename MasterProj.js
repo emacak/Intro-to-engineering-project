@@ -119,8 +119,12 @@ function setup() {
   textAlign(CENTER, CENTER);
   rectMode(CENTER);
 
-  // Native keyboard listener so typing and holding Backspace work reliably
+  // Keyboard shortcuts and name entry outside the typing exercise.
   window.addEventListener("keydown", (e) => {
+    if (currentScreen === "typing" || currentScreen === "typingComplete") {
+      return;
+    }
+
     if (e.key === "Escape" && currentScreen !== "menu") {
       currentScreen = "menu";
       nameInputFocused = false;

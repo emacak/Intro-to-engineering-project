@@ -1,10 +1,10 @@
 
-let paintLayer;     // Holds the user's colored brush strokes
-let outlineLayer;   // Holds the crisp black line art & background bursts
-let maskLayer;      // Hidden hit-detection mask (Green = inside character, Red = outside)
+let paintLayer;
+let outlineLayer;
+let maskLayer;
 
-let gameState = "NO_COLOR"; // "NO_COLOR" | "COLOR_SELECTED" | "DRAWING" | "END"
-let activeTool = "brush";   // "brush" | "eraser"
+let gameState = "NO_COLOR";
+let activeTool = "brush";
 let selectedColor = null;
 let brushSize = 18;
 let exerciseDifficulty = "Normal";
@@ -18,11 +18,10 @@ const DIFFICULTY_SETTINGS = {
 let draggingSizeSlider = false;
 
 let feedbackMessage = "Select a color on the left to begin!";
-let feedbackType = "neutral"; // "neutral" | "positive" | "negative"
+let feedbackType = "neutral";
 let insideStrokeCount = 0;
 let outsideStrokeCount = 0;
 
-// Drawing board dimensions
 const BOARD = {
   x: 135,
   y: 65,
@@ -30,7 +29,6 @@ const BOARD = {
   h: 410
 };
 
-// 7 Rainbow Palette Circles on the Left
 const PALETTE = [
   { name: "Red",    hex: "#FF0000", x: 70, y: 95,  r: 25 },
   { name: "Orange", hex: "#FF8800", x: 70, y: 153, r: 25 },
@@ -41,7 +39,6 @@ const PALETTE = [
   { name: "Pink",   hex: "#FF00FF", x: 70, y: 443, r: 25 }
 ];
 
-// Brush & Eraser Circular Buttons on the Right
 const TOOLS = [
   { type: "brush",  label: "Brush",  x: 685, y: 115, r: 32 },
   { type: "eraser", label: "Eraser", x: 685, y: 195, r: 32 }
@@ -80,7 +77,6 @@ function setup() {
 function draw() {
   background(246, 247, 251);
 
-  // 1. Header Title
   push();
   fill(20);
   noStroke();
@@ -90,17 +86,14 @@ function draw() {
   text("COLOR IN THE LINES - " + exerciseDifficulty.toUpperCase(), BOARD.x + BOARD.w / 2, 26);
   pop();
 
-  // 2. Feedback Banner
   drawFeedbackBanner();
 
-  // 3. Keep slider drags separate from painting, even outside the slider.
   if (draggingSizeSlider && gameState !== "END") {
     updateBrushSize();
   } else if (mouseIsPressed && gameState !== "END") {
     handleBoardPainting();
   }
 
-  // 4. Render Drawing Board (White base -> User Paint -> Crisp Line Art on top)
   push();
   stroke(90);
   strokeWeight(2);
@@ -117,12 +110,10 @@ function draw() {
   rect(BOARD.x, BOARD.y, BOARD.w, BOARD.h, 12);
   pop();
 
-  // 5. Draw Left Color Palette & Right Tool Buttons
   drawPaletteUI();
   drawToolsUI();
   drawStateTrackerUI();
 
-  // 6. Custom Brush Cursor Preview
   if (isInsideBoard(mouseX, mouseY) && gameState !== "END") {
     push();
     noFill();
@@ -132,7 +123,6 @@ function draw() {
     pop();
   }
 
-  // 7. End Screen Modal Overlay
   if (gameState === "END") {
     drawEndOverlay();
   }
@@ -515,17 +505,12 @@ function isInsideBoard(x, y) {
   );
 }
 
-// ============================================================================
-// SUPERHERO LINE ART & HIDDEN HITMASK GENERATOR (p5 v2.3 Compatible)
-// ============================================================================
 function buildSuperheroArtwork() {
   const cx = BOARD.w / 2;
   const cy = BOARD.h / 2 + 15;
 
-  // 1. Setup Mask Layer: Red = OUTSIDE lines, Green = INSIDE superhero lines
   maskLayer.background(255, 0, 0);
 
-  // 2. Setup Outline Layer: Radial comic burst lines in the background
   outlineLayer.clear();
   outlineLayer.stroke(140);
   outlineLayer.strokeWeight(1.5);
@@ -533,15 +518,12 @@ function buildSuperheroArtwork() {
     outlineLayer.line(cx, cy - 20, cx + cos(angle) * 360, cy - 20 + sin(angle) * 360);
   }
 
-  // Populate the Green Hitmask Layer
   drawHeroShapes(maskLayer, cx, cy, "mask");
 
-  // Knock out the radial lines behind the superhero on the outline layer
   outlineLayer.erase();
   drawHeroShapes(outlineLayer, cx, cy, "erase");
   outlineLayer.noErase();
 
-  // Draw the crisp black outlines on top
   drawHeroShapes(outlineLayer, cx, cy, "outline");
   drawDifficultyDetails(outlineLayer, cx, cy, "outline");
 }
@@ -583,7 +565,6 @@ function drawHeroShapes(pg, cx, cy, mode) {
     pg.strokeCap(ROUND);
   }
 
-  // 1. Cape
   pg.beginShape();
   pg.vertex(cx - 32, cy - 38);
   pg.vertex(cx - 85, cy + 25);
@@ -596,7 +577,6 @@ function drawHeroShapes(pg, cx, cy, mode) {
   pg.vertex(cx + 32, cy - 38);
   pg.endShape(CLOSE);
 
-  // 2. Left Arm (Hand on Hip)
   pg.beginShape();
   pg.vertex(cx - 34, cy - 32);
   pg.vertex(cx - 72, cy + 2);
@@ -606,7 +586,6 @@ function drawHeroShapes(pg, cx, cy, mode) {
   pg.vertex(cx - 28, cy - 16);
   pg.endShape(CLOSE);
 
-  // 3. Right Arm (Raised Fist)
   pg.beginShape();
   pg.vertex(cx + 32, cy - 34);
   pg.vertex(cx + 78, cy - 92);
@@ -615,7 +594,6 @@ function drawHeroShapes(pg, cx, cy, mode) {
   pg.endShape(CLOSE);
   pg.circle(cx + 92, cy - 92, 34);
 
-  // 4. Legs & Boots
   pg.rectMode(CENTER);
   pg.rect(cx - 24, cy + 90, 28, 60, 4);
   pg.beginShape();
@@ -637,7 +615,6 @@ function drawHeroShapes(pg, cx, cy, mode) {
   pg.vertex(cx + 8, cy + 165);
   pg.endShape(CLOSE);
 
-  // 5. Torso, Belt, Shield
   pg.beginShape();
   pg.vertex(cx - 38, cy - 36);
   pg.vertex(cx + 38, cy - 36);
@@ -656,14 +633,12 @@ function drawHeroShapes(pg, cx, cy, mode) {
   pg.vertex(cx - 26, cy - 2);
   pg.endShape(CLOSE);
 
-  // 6. Cape Clasp, Ears & Head
   pg.ellipse(cx - 10, cy - 38, 16, 10);
   pg.ellipse(cx + 10, cy - 38, 16, 10);
   pg.circle(cx - 56, cy - 95, 20);
   pg.circle(cx + 56, cy - 95, 20);
   pg.circle(cx, cy - 98, 108);
 
-  // 7. Spiky Hair Crown
   pg.beginShape();
   pg.vertex(cx - 54, cy - 108);
   pg.vertex(cx - 58, cy - 138);
@@ -679,12 +654,9 @@ function drawHeroShapes(pg, cx, cy, mode) {
   pg.vertex(cx - 22, cy - 122);
   pg.endShape(CLOSE);
 
-  // 8. Face Details (Only drawn on the visible outline layer)
   if (mode === "outline") {
-    // Domino Mask
     pg.rect(cx, cy - 95, 88, 34, 16);
 
-    // Eyes
     pg.fill(15);
     pg.ellipse(cx - 21, cy - 95, 14, 18);
     pg.ellipse(cx + 21, cy - 95, 14, 18);
@@ -693,7 +665,6 @@ function drawHeroShapes(pg, cx, cy, mode) {
     pg.circle(cx - 24, cy - 99, 5);
     pg.circle(cx + 18, cy - 99, 5);
 
-    // Smile
     pg.stroke(15);
     pg.strokeWeight(3);
     pg.noFill();
@@ -703,10 +674,8 @@ function drawHeroShapes(pg, cx, cy, mode) {
   pg.pop();
 }
 
-// Use the same closed silhouettes for artwork, background knockout, and scoring.
 function heroPolygon(pg, cx, cy, points, knockout = false) {
   if (knockout) {
-    // Remove hidden cape lines without covering the user's paint underneath.
     pg.push();
     pg.erase();
     pg.fill(255);
@@ -736,7 +705,6 @@ function drawBatmanShapes(pg, cx, cy, mode) {
   pg.push();
   setHeroDrawingStyle(pg, mode);
   const shape = points => heroPolygon(pg, cx, cy, points, mode === "outline");
-  // Scalloped cape, with generous regions for medium difficulty.
   pg.beginShape();
   pg.vertex(cx - 36, cy - 40);
   pg.bezierVertex(cx - 87, cy - 22, cx - 100, cy + 70, cx - 123, cy + 133);
@@ -747,7 +715,6 @@ function drawBatmanShapes(pg, cx, cy, mode) {
   pg.bezierVertex(cx + 100, cy + 70, cx + 87, cy - 22, cx + 36, cy - 40);
   pg.endShape(CLOSE);
 
-  // Share the arm boundary with the gauntlet lines so their ends meet exactly.
   const arm = [[38,-36],[64,-20],[78,40],[63,57],[48,43],[39,4]];
   for (const side of [-1, 1]) {
     shape(arm.map(([x,y]) => [side*x,y]));
@@ -756,7 +723,6 @@ function drawBatmanShapes(pg, cx, cy, mode) {
   }
   shape([[-38,-40],[38,-40],[33,58],[-33,58]]);
   shape([[-19,-57],[19,-57],[20,-40],[-20,-40]]);
-  // Tall pointed ears and a squared jaw make the cowl unmistakable.
   shape([[-44,-111],[-43,-171],[-23,-145],[23,-145],
     [43,-171],[44,-111],[37,-77],[22,-57],[-22,-57],[-37,-77]]);
 
@@ -788,7 +754,6 @@ function drawBatmanShapes(pg, cx, cy, mode) {
 function drawSpiderManShapes(pg, cx, cy, mode) {
   pg.push();
   setHeroDrawingStyle(pg, mode);
-  // Full mask, connected neck, and a raised web-shooting arm; no cape or belt.
   const leftArm = [[-34,-38],[-58,-20],[-96,37],[-91,55],[-77,59],[-63,42],[-40,8]];
   const rightArm = [[34,-38],[61,-68],[86,-105],[103,-94],[80,-49],[41,7]];
   heroPolygon(pg, cx, cy, leftArm);
@@ -805,14 +770,12 @@ function drawSpiderManShapes(pg, cx, cy, mode) {
 
   if (mode === "outline") {
     pg.strokeWeight(1.4);
-    // Elliptical rings and spokes stay inside the mask silhouette.
     for (let i=0; i<12; i++) {
       const angle = i * TWO_PI / 12;
       pg.line(cx, cy-107, cx+41*cos(angle), cy-107+49*sin(angle));
     }
     for (const size of [0.35, 0.65]) pg.ellipse(cx, cy-107, 83*size, 100*size);
 
-    // Clear web lines under each eye lens, leaving the paint layer visible.
     const eye = [[8,-109],[33,-130],[30,-108],[22,-91],[12,-94]];
     for (const side of [-1,1]) {
       const lens = eye.map(([x,y]) => [side*x,y]);
@@ -827,7 +790,6 @@ function drawSpiderManShapes(pg, cx, cy, mode) {
     }
 
     pg.strokeWeight(1.4);
-    // Construct each web section against the same edges as its suit region.
     for (const side of [-1,1]) {
       const panel = [[18,-38],[34,-38],[30,57],[15,62.5]]
         .map(([x,y]) => [side*x,y]);
@@ -848,7 +810,6 @@ function drawSpiderManShapes(pg, cx, cy, mode) {
       drawWebCrossLine(pg, cx, cy, leftArm, [-58-i*8,-17+i*13], [16,15]);
       drawWebCrossLine(pg, cx, cy, rightArm, [49+i*10,-54-i*13], [16,16-i]);
     }
-    // Eight-legged spider emblem centered on the chest.
     pg.strokeWeight(2.3);
     pg.ellipse(cx, cy-12, 8, 10);
     pg.ellipse(cx, cy+1, 11, 18);
@@ -863,7 +824,6 @@ function drawSpiderManShapes(pg, cx, cy, mode) {
   pg.pop();
 }
 
-// Intersect a web line with its closed panel so both ends meet the outline.
 function drawWebCrossLine(pg, cx, cy, polygon, origin, direction) {
   const cross = (a, b) => a[0]*b[1] - a[1]*b[0];
   const hits = [];
